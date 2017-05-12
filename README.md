@@ -3,6 +3,7 @@ Terrain-like heatmap data viz component for AFrame
 
 ![alt text](https://raw.githubusercontent.com/morandd/aframe-heatmap3d/master/example/example.png "Example image")
 
+This component is totally indebted to [Bryik's terrain component](https://github.com/bryik/aframe-terrain-model-component) and the work by others that went into that. This component is separated from that one because the usage and internals have totally changed, but the basic idea is based on that component.
 
 
 # API #
