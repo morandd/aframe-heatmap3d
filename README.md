@@ -1,8 +1,7 @@
 # aframe-heatmap3d
 Terrain-like heatmap data viz component for AFrame
 
-![alt text](http://img "Example image")
-
+![alt text](https://raw.githubusercontent.com/morandd/aframe-heatmap3d/master/example/example.png "Example image")
 
 
 
@@ -30,12 +29,9 @@ There are a few built-in palettes: `greypurple`, `aquablues`, `reds`, `redblue`,
 [ColorBrewer](http://colorbrewer2.org). You can also specify a palette as a JSON array, as shown in the example.
 
 ## Blurring ##
+You should generate the heap maps properly and feed them as images to this component to display. However a poor man's way of building heatmaps is to plonk down the data in an image, then blur it.
 
-You shou
-You should blur the data before 
-
-Blurring is computationally expensive
-
+Health warning: Blurring the data at the client is hacky. It's slow, and if you're dispalying scientific data, not so denfensible/transparent. That said, it can be a useful shortcut. To blur we can use the StackBlur javascript library. You can provide a sharp image as the `src` then specify a stackBlur value, and the StackBlur library will be invoked. Note it is a bit slow: in the example, blurring takes 0.6s on a modern Macbook Pro, which slows page load time. So it is better to blur the source image. 
 
 
 # Using #
