@@ -117,10 +117,10 @@
         var context = data.canvas.getContext('2d');
         var blurRadius = AFRAME.utils.device.isMobile() ?  (settings.stackBlurRadiusMobile || -1) : (settings.stackBlurRadius || -1);
         context.drawImage(img, 0, 0);
-        console.time("aframe-terrain-heatmap: blur image");
+        console.time("aframe-heatmap3d: blur image");
         if (blurRadius>0) StackBlur.canvasRGBA(data.canvas, 0, 0, img.width,  img.height, blurRadius);
         data.canvasContext = context;
-        console.timeEnd("aframe-terrain-heatmap: blur image");
+        console.timeEnd("aframe-heatmap3d: blur image");
 
         thisComponent.update(data);  // Fire update() again so we can run the code below and actually generate the terrain mesh
       }// onImageLoaded
@@ -156,9 +156,9 @@
     }
 
     // Create the plane geometry
-    console.time("aframe-terrain-heatmap: base geometry");
+    console.time("aframe-heatmap3d: base geometry");
     var geometry = new THREE.PlaneBufferGeometry(data.width, data.height, data.canvas.width-1, data.canvas.height-1);
-    console.timeEnd("aframe-terrain-heatmap: base geometry");
+    console.timeEnd("aframe-heatmap3d: base geometry");
 
 
 
@@ -189,7 +189,7 @@
     if (settings.scaleOpacityMethod==="log") sm=1;
     if (settings.scaleOpacityMethod==="log10") sm=2;
 
-    console.time("aframe-terrain-heatmap: calculate mesh");
+    console.time("aframe-heatmap3d: calculate mesh");
 
 
     // In the image white=255 RGB but equals 0 elevation, and black=0=1 elevation
@@ -240,7 +240,7 @@
     // and let THREE know that we've updated the BufferGeometry data
     geometry.attributes.position.needsUpdate = true;
 
-    console.timeEnd("aframe-terrain-heatmap: calculate mesh");
+    console.timeEnd("aframe-heatmap3d: calculate mesh");
 
 
 
