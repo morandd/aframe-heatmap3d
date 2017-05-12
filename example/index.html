@@ -1,79 +1,29 @@
 <html>
 <head>
 	<meta charset="UTF-8">
-	<title>My A-Frame Scene</title>
+	<title>aframe-heatmap3d demo</title>
 	<script src="https://aframe.io/releases/0.5.0/aframe.min.js"></script> 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script> 
 
 
-	<script src="aframe-terrain-model-component.js"></script>
+	<script src="../aframe-heatmap3d.js.js"></script>
+	<!-- We will use StackBlur in this example -->
+	<script src="stackblur.min.js"></script>
 
 	<script src="//cdn.rawgit.com/donmccurdy/aframe-extras/v3.7.0/dist/aframe-extras.min.js"></script>
-	<!--
-	<script src="//unpkg.com/aframe-leap-hands/dist/aframe-leap-hands.min.js"></script>
-	-->
 
-	<script src="stackblur.min.js"></script>
-	<script src="../aframe-orbit-controls-component.js"></script>
+	<script src="https://cdn.rawgit.com/tizzle/aframe-orbit-controls-component/master/dist/aframe-orbit-controls-component.min.js"></script>
+
 	<script src="../aframe-orbit-camera-vrtoggle-component.js"></script>
-	<script>
-		AFRAME.registerComponent('page_load_event', {
-			play: function(){
-				d3.select('#loading').transition().duration(3000).attr('opacity', "0").remove();
-			}
-		});
-	</script>
 
-	<link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
-	<style>
-	body {
-		font-size: 1.5em; /* currently ems cause chrome bug misinterpreting rems on body element */
-		line-height: 1.6;
-		font-weight: 400;
-		font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	}
-	#buttonPanel {
-		width:150px;
-		position: absolute;
-		top: 20px;
-		left: 20px;
-	}
-	.button {
-		display: inline-block;
-		height: 38px;
-		padding: 0 30px;
-		color: #555;
-		text-align: center;
-		font-size: 11px;
-		font-weight: 600;
-		line-height: 38px;
-		letter-spacing: .1rem;
-		text-transform: uppercase;
-		text-decoration: none;
-		white-space: nowrap;
-		background-color: transparent;
-		border-radius: 4px;
-		border: 1px solid #bbb;
-		cursor: pointer;
-		box-sizing: border-box;
-		color: #FFF;
-		background-color: #33C3F0;
-		border-color: #33C3F0;
-		width: 100%;
-		margin-top:20px;
-	}
-	.button:focus {
-		color: #FFF;
-		background-color: #1EAEDB;
-		border-color: #1EAEDB;
-	}
-	</style>
+
+
 	<script type="text/javascript">
-		function handleClick(region){
-			console.log('Switch to '+region);
-			document.querySelector('#basemapEl').setAttribute('src', '#png'+region);
-			document.querySelector('[terrain-heatmap-model]').setAttribute('terrain-heatmap-model', {src: '#png' + region, srcMobile: '#pngMobile'+region});
+	AFRAME.registerComponent('page_load_event', {
+		play: function(){
+			d3.select('#loading').transition().duration(3000).attr('opacity', "0").remove();
 		}
+	});
 	</script>
 
 </head>
@@ -83,15 +33,8 @@
 
 
 		<a-assets>
-			<img id="grid" src="grid.png" style="display: none"/>
-
-			<img id="pngAsia" src="asia.png"  style="display:none"/>
-			<img id="pngMobileAsia" src="asia.png"  style="display:none"/>
-			<img id="pngUSA" src="usa.jpg"  style="display:none"/>
-			<img id="pngMobileUSA" src="usa.jpg"  style="display:none"/>
-			<img id="pngEU" src="eu_1000.jpg"  style="display:none"/>
-			<img id="pngMobileEU" src="eu_1000.jpg"  style="display:none"/>
-
+			<img id="pngEU" src="eu_500.jpg"  style="display:none"/>
+			<img id="pngEUMobile" src="eu_500.jpg"  style="display:none"/>
 		</a-assets>
 
 
@@ -100,14 +43,6 @@
 		-->
 		<a-sky color="#eee"></a-sky>
 		<!-- Holodeck skybox -->
-		<!--
-		<a-entity geometry="primitive: box; depth: 250; height: 150; width: 250"
-			material="metalness: 0; src: #grid;
-			side: double; repeat: 25 25; roughness: 1"
-			position="0 0 0">
-		</a-entity>
-		-->
-
 
 
 		<!--
@@ -117,16 +52,17 @@
 
 
 		<!--
-			Base map image
+			Base image
 		-->
-		<a-image id="basemapEl" src="#pngAsia" width="4" height="4"  rotation="-90 0 0" position="0 0 -0.001"> </a-image>
+		<a-image id="basemapEl" src="#pngEU" width="4" height="4"  rotation="-90 0 0" position="0 0 -0.001"> </a-image>
 
 
 		<!--
-			Translucent mountains overlay
+			The heightmap3d is placed on top.
+			It always has a height (Y axis) of 1, so we use 'scale' to control the height.
 		-->	
 		<a-entity	
-		terrain-heatmap-model="src: #pngAsia;srcMobile: #pngAsiaMobile;  scaleOpacity: true; palette:autumn; scaleOpacityMethod:lin; opacityMin: 0.7; stackBlurRadius:8.5; stackBlurRadiusMobile:0.5; width: 4; height: 4;" scale="1 0.23 1">
+		aframe-heatmap3="src: #pngEU; srcMobile: #pngEUMobile;  scaleOpacity: true; palette:autumn; scaleOpacityMethod:lin; opacityMin: 0.7; stackBlurRadius:8.5; stackBlurRadiusMobile:0.5; width: 4; height: 4;" scale="1 0.23 1">
 		</a-entity>
 
 
@@ -176,12 +112,6 @@
 
 	</a-scene>
 
-
-<div id="buttonPanel">
-	<div class="button" style="top:0px; " onclick="handleClick('Asia')">Asia</div>
-	<div class="button" style="top:150px;"  onclick="handleClick('EU')">Europe</div>
-	<div class="button" style="top:280px;"  onclick="handleClick('USA')">N. America</div>
-</div>
 
 </body>
 
