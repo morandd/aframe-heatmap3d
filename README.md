@@ -1,5 +1,5 @@
 # aframe-heatmap3d
-Terrain-like heatmap data viz component for AFrame
+Terrain-like heatmap data viz component for AFrame. Provide your data as an greyscale image, then choose a palette, opacity settings, and blur radius.
 
 ![alt text](https://morandd.github.io/aframe-heatmap3d/example/example.png "Example image")
 
@@ -13,20 +13,22 @@ This component is totally indebted to [Bryik's terrain component](https://github
 
 Attribute | Description | Default
 --- | --- | ---
-src | Data to visualize  | |
+src | Data to visualize: image URL or AFrame asset (e.g. '#myImage')  | |
 srcMobile | Alternative URL to use when viewing on mobile devices | |
 palette | Color palette | redblue |
+scaleOpacity | Scale opacity of peaks? | true
+scaleOpacityMethod | "log" or "linear" scaling of opacity | "linear"
 opacityMin | Minimum opacity | 0.2 
 opacityMax | Max opacity | 1
 ignoreZeroValues | If true, zero values in the data will not be rendered | true
 stackBlurRadius | Blur effect. See below. | null
 stackBlurRadiusMobile | Blur effect. See below. | =stackBlurRadius
-scaleOpacity | Scale opacity of peaks? | true
-scaleOpacityMethod | "log" or "linear" scaling of opacity | "linear"
 invertElevation | Default: white=1, black=0. If this is true, white=0, black=1 | false
 width | width of component, in AFrame units | 1
 height | depth of component (on Z axis, not Y axis), in AFrame units. Note that the height (Y axis) is always 1 | =width
 
+## Using ##
+Supply a greyscale image (or a color image, in which case the Red pixel value is taken). Normally white=0 elevationm and black=1 elevation, or use invertElevation to switch this. The component is always 1 aframe unit high, so adjust the entity's "scale" Y axis attribute to adjust the height.
 
 ### Color Palettes ###
 There are a few built-in palettes: `greypurple`, `aquablues`, `reds`, `redblue`, `grass`, `greens`, and `autumn`. These are taken from
@@ -35,7 +37,7 @@ There are a few built-in palettes: `greypurple`, `aquablues`, `reds`, `redblue`,
 ## Blurring ##
 You should generate the heap maps properly and feed them as images to this component to display. However a poor man's way of building heatmaps is to plonk down the data in an image, then blur it.
 
-Health warning: Blurring the data at the client is hacky. It's slow, and if you're displaying scientific data, not so denfensible/transparent. That said, it can be a useful shortcut. To blur we can use the StackBlur javascript library. You can provide a sharp image as the `src` (only works with images, not JSON) then specify a stackBlur value, and the StackBlur library will be invoked. Note it is a bit slow: in the example, blurring takes 0.6s on a modern Macbook Pro, which slows page load time. So it is better to blur the source image. 
+Health warning: Blurring the data at the client is hacky. It's slow, and if you're displaying scientific data, not so denfensible/transparent. That said, it can be a useful shortcut. To blur we can use the StackBlur javascript library. You can provide a sharp image as the `src` then specify a stackBlur value, and the StackBlur library will be invoked. Note it is a bit slow: in the example, blurring takes 0.6s on a modern Macbook Pro, which slows page load time. So it is better to blur the source image. 
 
 
 # Using #
@@ -52,4 +54,6 @@ D3 is required.
 
 ## TODO ##
 - Improve handling of load sequence, use Promises and onload events properly.
+- Allow JSON input. To implement this, the user can specify a 2-dimensional array as JSON, or set of x/y/value points, which are drawn to a canvas then blurred.
+
 
