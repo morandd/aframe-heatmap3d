@@ -1,118 +1,12 @@
 <html>
-<head>
-	<meta charset="UTF-8">
-	<title>aframe-heatmap3d demo</title>
-	<script src="https://aframe.io/releases/0.5.0/aframe.min.js"></script> 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script> 
-
-
-	<script src="../aframe-heatmap3d.js"></script>
-	<!-- We will use StackBlur in this example -->
-	<script src="stackblur.min.js"></script>
-
-	<script src="//cdn.rawgit.com/donmccurdy/aframe-extras/v3.7.0/dist/aframe-extras.min.js"></script>
-
-	<script src="https://cdn.rawgit.com/tizzle/aframe-orbit-controls-component/master/dist/aframe-orbit-controls-component.min.js"></script>
-
-	<!--
-	<script src="../aframe-orbit-camera-vrtoggle-component.js"></script>
-	-->
-
-
-	<script type="text/javascript">
-	AFRAME.registerComponent('page_load_event', {
-		play: function(){
-			d3.select('#loading').transition().duration(3000).attr('opacity', "0").remove();
-		}
-	});
-	</script>
-
-</head>
-
 <body>
-	<a-scene page_load_event aframe_orbit_camera_vrtoggle_component>
+	
 
+<br/><br/>
 
-		<a-assets>
-			<img id="pngEU" src="eu_500.jpg"  style="display:none"/>
-			<img id="pngEUMobile" src="eu_500.jpg"  style="display:none"/>
-		</a-assets>
+<a href="basic">Basic Example</a><br/><br/>
 
-
-		<!--
-			Sky.
-		-->
-		<a-sky color="#eee"></a-sky>
-		<!-- Holodeck skybox -->
-
-
-		<!--
-			Loading indicator (wireframe box)
-		-->
-		<a-box id="loading" depth="4" height="1"  width="4" color="#aaa" wireframe="true" opacity="0.5" position="0 0.5 0"></a-box>
-
-
-		<!--
-			Base image
-		-->
-		<a-image id="basemapEl" src="#pngEU" width="4" height="4"  rotation="-90 0 0" position="0 0 -0.001"> </a-image>
-
-
-		<!--
-			The heightmap3d is placed on top.
-			It always has a height (Y axis) of 1, so we use 'scale' to control the height.
-		-->	
-		<a-entity	
-		aframe-heatmap3d="src: #pngEU; srcMobile: #pngEUMobile;  scaleOpacity: true; palette:autumn; scaleOpacityMethod:lin; opacityMin: 0.7; stackBlurRadius:8.5; stackBlurRadiusMobile:0.5; width: 4; height: 4;" scale="1 0.23 1">
-		</a-entity>
-
-
-
-		<!--
-			Target for orbit camera
-		-->
-		<a-entity
-			id="target"
-			geometry="primitive: box"
-			position="0 0 0"
-			material="visible:false">
-		</a-entity>
-
-
-
-		<!-- 
-			Cameras.
-			Orbit cam for 2D and look-cam for VR, toggled using aframe_orbit_camera_vrtoggle_component.
-		-->
-		<a-entity
-			camera="active:true"
-			id="camera_orbit"
-			position="2 3 5"
-			orbit-controls="
-			autoRotate: false;
-			target: #target;
-			enableDamping: true;
-			dampingFactor: 0.125;
-			rotateSpeed:0.15;
-			zoomSpeed:0.5;
-			maxPolarAngle:1.85;
-			minDistance:1;
-			maxDistance:10;">
-		</a-entity>
-
-		<a-entity
-			camera="active:false"
-			id="camera_look"
-			position="0 2 3"
-			rotation="-35 0 0"
-			look-controls
-			wasd-controls="fly:true" 
-			mouse-cursor="">
-		</a-entity>
-
-	</a-scene>
-
+<a href="basic">Particles Mode Example</a>
 
 </body>
-
 </html>

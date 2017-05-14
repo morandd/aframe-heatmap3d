@@ -28,6 +28,14 @@
       type: 'number',
       default: 1
     },
+    renderMode: {
+      type: 'string',
+      default: 'surface' // 'surface' or 'particles'
+    },
+    particleSize: {
+      type: 'number',
+      default: 1.0
+    },
     ignoreZeroValues: {
       type: 'boolean',
       default: true
@@ -84,6 +92,22 @@
     '       gl_FragColor = vec4( vColor, vOpacity );' +
     '     }',
 
+
+  customPointsVertexShader: '' +
+    '     varying vec3 vColor;' +
+    '     uniform float pointsize;' +
+    '     void main() {' +
+    '       vColor = color;' +
+    '       gl_PointSize = pointsize;' +
+    '       gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );;' +
+    '     }',
+
+  customPointsFragShader: '' +
+    '     varying vec3 vColor;' +
+    '     void main() {' +
+    '       gl_FragColor = vec4( vColor, 1.0 );' +
+    '     }',
+
   /**
    * Called when component is attached and when component data changes.
    * Generally modifies the entity based on the data.
@@ -92,9 +116,7 @@
     var thisComponent = this;
     var el = this.el;
     var data = this.data;
-    var settings = data;
-    var debug = data.debug;
-    var surface;
+
     data.src = data.src || ''; // If user does not specify, this is 'undefined' instead of ''. Fix here.
     data.srcMobile = data.srcMobile || ''; 
 
@@ -115,12 +137,14 @@
         data.canvas.style.display="none";
         document.body.appendChild(data.canvas);
         var context = data.canvas.getContext('2d');
-        var blurRadius = AFRAME.utils.device.isMobile() ?  (settings.stackBlurRadiusMobile || -1) : (settings.stackBlurRadius || -1);
+        var blurRadius = AFRAME.utils.device.isMobile() ?  (data.stackBlurRadiusMobile || -1) : (data.stackBlurRadius || -1);
         context.drawImage(img, 0, 0);
-        console.time("aframe-heatmap3d: blur image");
-        if (blurRadius>0) StackBlur.canvasRGBA(data.canvas, 0, 0, img.width,  img.height, blurRadius);
+        if (blurRadius>0) {
+          console.time("aframe-heatmap3d: blur image");
+          StackBlur.canvasRGBA(data.canvas, 0, 0, img.width,  img.height, blurRadius);
+          console.timeEnd("aframe-heatmap3d: blur image");
+        }
         data.canvasContext = context;
-        console.timeEnd("aframe-heatmap3d: blur image");
 
         thisComponent.update(data);  // Fire update() again so we can run the code below and actually generate the terrain mesh
       }// onImageLoaded
@@ -129,6 +153,7 @@
     // Only (re-)generate the mesh if we have DEM data
     if (!data.canvasContext) { return; }
 
+    if ("particles" === data.renderMode && data.scaleOpacity) console.warn('aframe-heatmap3d: renderMode=particles and scaleOpacity is True, may look strange');
 
 
     /*
@@ -173,7 +198,7 @@
     // Use D3's color mapping functions to map values to the color palette
     var funcColorize  = null;
     if (vertexColors && d3) {
-      funcColorize = d3.scaleQuantize().domain([0, 1]).range(settings.palette);
+      funcColorize = d3.scaleQuantize().domain([0, 1]).range(data.palette);
     }
 
 
@@ -184,17 +209,17 @@
     var ci = 1; // Index into the canvasContext.getImage2D data. This has to be incremented in steps of 4 since it is RGBA tuples
     var val=0; // Value from the elevation DEM
     var bigint; // Temp variable, used for colors
-    var sm= settings.scaleOpacity ? 0 : -1; // Shorthand value for scaleOpacityMethod
+    var sm= data.scaleOpacity ? 0 : -1; // Shorthand value for scaleOpacityMethod
     var maxPixelVal=0, minPixelVal=255;
-    if (settings.scaleOpacityMethod==="log") sm=1;
-    if (settings.scaleOpacityMethod==="log10") sm=2;
+    if (data.scaleOpacityMethod==="log") sm=1;
+    if (data.scaleOpacityMethod==="log10") sm=2;
 
     console.time("aframe-heatmap3d: calculate mesh");
 
 
     // In the image white=255 RGB but equals 0 elevation, and black=0=1 elevation
     // But maybe the user wants to invert this, so that black=0 elevation and white=1. We do that here.
-    if (settings.invertElevation) for (ci=0; ci<imgBytes.length; ci+=4) imgBytes[ci] = 255 - imgBytes[ci];
+    if (data.invertElevation) for (ci=0; ci<imgBytes.length; ci+=4) imgBytes[ci] = 255 - imgBytes[ci];
 
 
     // Get maximum pixel value from elevation image, so we can scale elevation into a 0-1 range
@@ -215,14 +240,14 @@
       if (sm===-1) {
         vertexOpacities[di] = 1;
       } else if (sm===0) {
-        vertexOpacities[di] = Math.max(settings.opacityMin, val * settings.opacityMax);
+        vertexOpacities[di] = Math.max(data.opacityMin, val * data.opacityMax);
       } else if (sm===1) {
-        vertexOpacities[di] = Math.max(settings.opacityMin, Math.log(val+1) / Math.log(2) * settings.opacityMax);
+        vertexOpacities[di] = Math.max(data.opacityMin, Math.log(val+1) / Math.log(2) * data.opacityMax);
       } else if (sm===2) {
-        vertexOpacities[di] = Math.max(settings.opacityMin, Math.log10(val+1) / Math.log10(2) * settings.opacityMax);
+        vertexOpacities[di] = Math.max(data.opacityMin, Math.log10(val+1) / Math.log10(2) * data.opacityMax);
       }
 
-      if (settings.ignoreZeroValues && imgBytes[ci]===255) vertexOpacities[di] =0;
+      if (data.ignoreZeroValues && imgBytes[ci]===255) vertexOpacities[di] =0;
 
       // Calculate vertex color
       clr = funcColorize(val); // Returns a string like "#ff0000"
@@ -250,7 +275,7 @@
      * If there is no transparency, we can use a normal Lambert material.
      */
     var material;
-    if (settings.scaleOpacity) {
+    if (data.scaleOpacity) {
       material = new THREE.ShaderMaterial({
         vertexShader:   this.customVertexShader,
         fragmentShader: this.customFragShader,
@@ -261,15 +286,40 @@
         vertexColors:THREE.VertexColors
       });
     } else {
-      material = new THREE.MeshLambertMaterial({
-        transparent: false,
-        vertexColors:THREE.VertexColors
-      });
+      if ("surface" === data.renderMode) {
+        material = new THREE.MeshLambertMaterial({
+          transparent: false,
+          vertexColors:THREE.VertexColors
+        });
+      } else {
+        material = new THREE.ShaderMaterial({
+          uniforms: {
+            pointsize: {value: data.particleSize }
+          },
+          vertexShader:   this.customPointsVertexShader,
+          fragmentShader: this.customPointsFragShader,
+          blending:       THREE.NormalBlending,
+          wireframe:      false,
+          depthTest:      false,
+          transparent:    false,
+          vertexColors:THREE.VertexColors
+        });
+
+      }
     }
 
 
     // Create the surface mesh and register it under entity's object3DMap
-    surface = new THREE.Mesh(geometry, material);
+    var surface;
+    if ("surface" === data.renderMode) {
+      surface = new THREE.Mesh(geometry, material);
+    } else {
+      geometry.removeAttribute('normal');
+      geometry.removeAttribute('uv');
+      geometry.removeAttribute('opacity');
+      surface = new THREE.Points(geometry, material);//, material);
+
+    }
     surface.rotation.x = -90 * Math.PI / 180;
     el.setObject3D('terrain-heatmap', surface);
 
