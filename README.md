@@ -1,6 +1,10 @@
 # aframe-heatmap3d
 Terrain-like heatmap data viz component for AFrame. Provide your data as an greyscale image, then choose a palette, opacity settings, and blur radius.
 
+
+<img src="https://morandd.github.io/aframe-heatmap3d/example/example.png" width="250px"/>
+<img src="https://morandd.github.io/aframe-heatmap3d/example/example2.png" width="250px"/>
+
 ![alt text](https://morandd.github.io/aframe-heatmap3d/example/example.png =250 "Example image")
 ![alt text](https://morandd.github.io/aframe-heatmap3d/example/example2.png =250 "Particles example")
 
