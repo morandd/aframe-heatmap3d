@@ -252,7 +252,7 @@
         vertexOpacities[di] = Math.max(data.opacityMin, Math.log10(val+1) / Math.log10(2) * data.opacityMax);
       }
 
-      if (data.ignoreZeroValues && imgBytes[ci]===255) vertexOpacities[di] =0;
+      if (data.ignoreZeroValues && val===0) vertexOpacities[di]=0;
 
       // Calculate vertex color
       clr = funcColorize(val); // Returns a string like "#ff0000"
