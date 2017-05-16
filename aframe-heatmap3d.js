@@ -56,6 +56,10 @@
       type: 'string',
       default: 'linear' // Can be 'log' or 'linear'
     },
+   stretch: {
+       type: 'boolean',
+    default: false
+   },
     invertElevation: {
       type: 'boolean',
       default: false
@@ -221,17 +225,23 @@
     // But maybe the user wants to invert this, so that black=0 elevation and white=1. We do that here.
     if (data.invertElevation) for (ci=0; ci<imgBytes.length; ci+=4) imgBytes[ci] = 255 - imgBytes[ci];
 
-
-    // Get maximum pixel value from elevation image, so we can scale elevation into a 0-1 range
-    for (ci=0; ci<imgBytes.length; ci+=4) {
-      maxPixelVal = Math.max(maxPixelVal, imgBytes[ci]);
-      minPixelVal = Math.min(minPixelVal, imgBytes[ci]);
+    if (data.scale) {
+     for (ci=0; ci<imgBytes.length; ci+=4) {
+       maxPixelVal = Math.max(maxPixelVal, imgBytes[ci]);
+       minPixelVal = Math.min(minPixelVal, imgBytes[ci]);
+     }
+    } else {
+     maxPixelVal = 255; minPixelVal=0;
     }
 
     for (vi=2, di=0, ci=0;    vi<NVERTS*3;   vi+=3, di++, ci+=4) {
-
+      // White is value 255, but this means elevation=0. So lets swap that around:
+      val = 255- imgBytes[ci];
+      val = (val-minPixelVal)/(maxPixelVal-minPixelVal); // Then normalize into our range
       // Get this pixels' elevation, in the range 0-1. Do 1- so that white=0 and black=1
-      val = 1 - (imgBytes[ci]*1.0-minPixelVal)/(maxPixelVal-minPixelVal); 
+      //val = imgBytes[ci] - minPixelVal; 
+      //val = 1 - val / (maxPixelVal-minPixelVal); 
+      //val = 1 - (imgBytes[ci]*1.0-minPixelVal)/(maxPixelVal-minPixelVal); 
 
       // Set the Z-axis value. Range is 0-1
       verts.array[vi] = val;
