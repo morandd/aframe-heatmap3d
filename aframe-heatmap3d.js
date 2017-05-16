@@ -235,13 +235,8 @@
     }
 
     for (vi=2, di=0, ci=0;    vi<NVERTS*3;   vi+=3, di++, ci+=4) {
-      // White is value 255, but this means elevation=0. So lets swap that around:
-      val = 255- imgBytes[ci];
-      val = (val-minPixelVal)/(maxPixelVal-minPixelVal); // Then normalize into our range
       // Get this pixels' elevation, in the range 0-1. Do 1- so that white=0 and black=1
-      //val = imgBytes[ci] - minPixelVal; 
-      //val = 1 - val / (maxPixelVal-minPixelVal); 
-      //val = 1 - (imgBytes[ci]*1.0-minPixelVal)/(maxPixelVal-minPixelVal); 
+      val = 1- (imgBytes[ci]-minPixelVal) /(maxPixelVal-minPixelVal)
 
       // Set the Z-axis value. Range is 0-1
       verts.array[vi] = val;
