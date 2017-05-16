@@ -31,12 +31,16 @@ stackBlurRadiusMobile | Blur effect. See below. | =stackBlurRadius
 invertElevation | Default: white=1, black=0. If this is true, white=0, black=1 | false
 renderMode | "surface" or "particles" | surface
 particleSize | Particle size, for renderMode=particles | 1.0
-width | width of component, in AFrame units | 1
-height | depth of component (on Z axis, not Y axis), in AFrame units. Note that the height (Y axis) is always 1 | =width
+height | depth of component (on Z axis, not Y axis) |  1
+width | width of component, in AFrame units | (see below)
 
 ## Using ##
 Supply a greyscale image (or a color image, in which case the Red pixel value is taken). Normally white=0 elevation and black=1 elevation, or use invertElevation to switch this. Greyscale values are respected, or use `stretch:true` to stretch the values
-so it fully covers elevation 0 to elevation 1. The component is always 1 aframe unit high, so adjust the entity's "scale" Y axis attribute to adjust the height.
+so it fully covers elevation 0 to elevation 1. 
+
+If you specify just one of `height` or `width`, the other will be calculated based on the aspect ratio of the `src` image. The default height is 1. You can also specify both height and width to force a certain size. The map is always vertically 1 AFrame unit high, so adjust the entity's "scale" Y axis attribute to adjust the height.
+
+
 
 ### Color Palettes ###
 There are a few built-in palettes: `greypurple`, `aquablues`, `reds`, `redblue`, `grass`, `greens`, and `autumn`. These are taken from
