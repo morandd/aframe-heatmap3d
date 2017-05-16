@@ -65,10 +65,12 @@
       default: false
     },
     height: {
-      type: 'number'
+      type: 'number',
+      default: null
     },
     width: {
-      type: 'number'
+      type: 'number',
+      default: null
     }
   },
 
@@ -76,6 +78,7 @@
 
   init: function() {
     this.data.stackBlurRadiusMobile  = this.data.stackBlurRadiusMobile || this.data.stackBlurRadius;
+
   },
 
 
@@ -127,7 +130,6 @@
     var diff = AFRAME.utils.diff(data, oldData);
 
 
-
     if ("src" in diff && (data.src.length>0 || data.srcMobile.length>0)) {
       var img = document.querySelectorAll('[src="' + (AFRAME.utils.device.isMobile() ?  data.srcMobile : data.src) + '"]');
       img=img[0];
@@ -138,6 +140,7 @@
         data.canvas = document.createElement('canvas');
         data.canvas.setAttribute("width", img.width);
         data.canvas.setAttribute("height", img.height);
+        data.aspectRatio = img.width / img.height;
         data.canvas.style.display="none";
         document.body.appendChild(data.canvas);
         var context = data.canvas.getContext('2d');
@@ -182,6 +185,20 @@
       } else {
         data.palette  = JSON.parse(data.palette.replace(/'/g ,'"'));
       }
+    }
+
+
+    // Figure out our dimensions
+    // Case 1: User specified W and H
+    if (isFinite(data.width) && isFinite(data.height)) {
+      // Do nothing. We're golden
+    } else if (isFinite(data.width) && !isFinite(data.height)) {
+      data.height = data.width / data.aspectRatio;
+    } else if (isFinite(data.height) && !isFinite(data.width)) {
+      data.width = data.height * data.aspectRatio;
+    } else if (!isFinite(data.height) && !isFinite(data.width)) {
+      data.height = 1;
+      data.width = data.height * data.aspectRatio;
     }
 
     // Create the plane geometry
