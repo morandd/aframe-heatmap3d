@@ -225,7 +225,7 @@
     // But maybe the user wants to invert this, so that black=0 elevation and white=1. We do that here.
     if (data.invertElevation) for (ci=0; ci<imgBytes.length; ci+=4) imgBytes[ci] = 255 - imgBytes[ci];
 
-    if (data.scale) {
+    if (data.stretch) {
      for (ci=0; ci<imgBytes.length; ci+=4) {
        maxPixelVal = Math.max(maxPixelVal, imgBytes[ci]);
        minPixelVal = Math.min(minPixelVal, imgBytes[ci]);
