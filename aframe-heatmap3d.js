@@ -36,6 +36,10 @@
       type: 'number',
       default: 1.0
     },
+    particleDepthTest: {
+      type: 'boolean',
+      default: false
+    },
     ignoreZeroValues: {
       type: 'boolean',
       default: true
@@ -160,7 +164,11 @@
     // Only (re-)generate the mesh if we have DEM data
     if (!data.canvasContext) { return; }
 
-    if ("particles" === data.renderMode && data.scaleOpacity) console.warn('aframe-heatmap3d: renderMode=particles and scaleOpacity is True, may look strange');
+
+    if ("particles" === data.renderMode && data.scaleOpacity) {
+      data.scaleOpacity = false;
+      console.warn('aframe-heatmap3d: renderMode=particles; forcing scaleOpacity=false');
+    }
 
 
     /*
@@ -313,16 +321,16 @@
           transparent: false,
           vertexColors:THREE.VertexColors
         });
-      } else {
+      } else if (data.renderMode === "particles") {
         material = new THREE.ShaderMaterial({
           uniforms: {
             pointsize: {value: data.particleSize }
           },
           vertexShader:   this.customPointsVertexShader,
           fragmentShader: this.customPointsFragShader,
-          blending:       THREE.NormalBlending,
+          blending:       THREE.NoBlending,
           wireframe:      false,
-          depthTest:      false,
+          depthTest:      data.particleDepthTest,
           transparent:    false,
           vertexColors:THREE.VertexColors
         });

@@ -49,6 +49,8 @@ There are a few built-in palettes: `greypurple`, `aquablues`, `reds`, `redblue`,
 ### Particle mode ###
 To render the map as particles instead of a continuous surface, specify renderMode:particles and optionally adjust the particleSize. It may be nice to fix the camera position if you use particle mode, because particles are always the same size regardless of how close/far the camera is from them. So when viewed from afar, we see a dense cloud, but when zoomed in, individual particles become hard to see as they are still small but now widely spaced.
 
+Another setting to mind is `particleDepthTest`. To be honest I'm not 100% sure what this does/means, but the short story is if this is False, and you try to have particles on top of another object they will not render properly. However setting it to True increases the GPU demand a lot (based on the very unscientific test of how hot my laptop gets). I have chosen the default as `false` but you may need to set it to `true`. To improve performace, reduce the number of points by resizing your `src`.
+
 
 ## Blurring ##
 You should generate the heap maps properly and feed them as images to this component to display. However a poor man's way of building heatmaps is to plonk down the data in an image, then blur it.
