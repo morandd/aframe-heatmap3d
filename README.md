@@ -25,7 +25,7 @@ scaleOpacityMethod | "log" or "linear" scaling of opacity | "linear"
 opacityMin | Minimum opacity | 0.2 
 opacityMax | Max opacity | 1
 ignoreZeroValues | If true, zero values in the data will not be rendered | true
-scale | If true, we will stretch the image values so they fill the range 0-255. | false
+stretch | If true, we will stretch the image values so they fill the range 0-255. | false
 stackBlurRadius | Blur effect. See below. | null
 stackBlurRadiusMobile | Blur effect. See below. | =stackBlurRadius
 invertElevation | Default: white=1, black=0. If this is true, white=0, black=1 | false
@@ -35,7 +35,7 @@ width | width of component, in AFrame units | 1
 height | depth of component (on Z axis, not Y axis), in AFrame units. Note that the height (Y axis) is always 1 | =width
 
 ## Using ##
-Supply a greyscale image (or a color image, in which case the Red pixel value is taken). Normally white=0 elevation and black=1 elevation, or use invertElevation to switch this. Greyscale values are respected, or use `scale:true` to stretch the values
+Supply a greyscale image (or a color image, in which case the Red pixel value is taken). Normally white=0 elevation and black=1 elevation, or use invertElevation to switch this. Greyscale values are respected, or use `stretch:true` to stretch the values
 so it fully covers elevation 0 to elevation 1. The component is always 1 aframe unit high, so adjust the entity's "scale" Y axis attribute to adjust the height.
 
 ### Color Palettes ###
