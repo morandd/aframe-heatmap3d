@@ -70,6 +70,15 @@ D3 is required.
 
 ```
 
+Example:
+```
+<!--  It always has a height (Y axis) of 1, so we use 'scale' to control the height -->	
+<a-entity	
+		aframe-heatmap3d="src: #pngEU; srcMobile: #pngEUMobile;  scaleOpacity: true; palette:autumn; scaleOpacityMethod:lin; opacityMin: 0.7; stackBlurRadius:8.5; stackBlurRadiusMobile:0.5; width: 4; height: 4;" scale="1 0.23 1">
+</a-entity>
+```
+
+
 ## TODO ##
 - Improve handling of load sequence, use Promises and onload events properly.
 - Allow JSON input. To implement this, the user can specify a 2-dimensional array as JSON, or set of x/y/value points, which are drawn to a canvas then blurred.
