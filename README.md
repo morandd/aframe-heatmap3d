@@ -53,7 +53,7 @@ Another setting to mind is `particleDepthTest`. To be honest I'm not 100% sure w
 
 
 ## Blurring ##
-You should generate the heap maps properly and feed them as images to this component to display. However a poor man's way of building heatmaps is to plonk down the data in an image, then blur it.
+You should generate the heap maps properly and feed them as images to this component to display. However a poor man's way of building heatmaps is to plonk down the data in an image, then blur it. This is implemented here using Flozz's extremely convenient and nice [StackBlur](https://github.com/flozz/StackBlur) javascript blur library.
 
 Health warning: Blurring the data at the client is hacky. It's slow, and if you're displaying scientific data, not so denfensible/transparent. That said, it can be a useful shortcut. To blur we can use the StackBlur javascript library. You can provide a sharp image as the `src` then specify a stackBlur value, and the StackBlur library will be invoked. Note it is a bit slow: in the example, blurring takes 0.6s on a modern Macbook Pro, which slows page load time. So it is better to blur the source image. 
 
@@ -65,16 +65,15 @@ D3 is required.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script> 
 <script src="https://morandd.github.io/aframe-heatmap3d/aframe-heatmap3d.js"></script>
 
-<!-- Optional: (only needed if you want to use StackBlur) -->
-<script src="https://morandd.github.io/aframe-heatmap3d/stackblur.min.js"></script>
+<!-- Optional: Only needed if you want to use StackBlur. This minified file is copied from https://github.com/flozz/StackBlur  -->
+<script src="https://morandd.github.io/aframe-heatmap3d/example/stackblur.min.js"></script>
 
 ```
 
 Example:
 ```
 <!--  It always has a height (Y axis) of 1, so we use 'scale' to control the height -->	
-<a-entity	
-		aframe-heatmap3d="src: #pngEU; srcMobile: #pngEUMobile;  scaleOpacity: true; palette:autumn; scaleOpacityMethod:lin; opacityMin: 0.7; stackBlurRadius:8.5; stackBlurRadiusMobile:0.5; width: 4; height: 4;" scale="1 0.23 1">
+<a-entity aframe-heatmap3d="src: #pngEU; srcMobile: #pngEUMobile;  scaleOpacity: true; stackBlurRadius:8.5; stackBlurRadiusMobile:0.5; width: 4; height: 4;" scale="1 0.23 1">
 </a-entity>
 ```
 
