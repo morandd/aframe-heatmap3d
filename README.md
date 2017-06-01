@@ -40,12 +40,14 @@ so it fully covers elevation 0 to elevation 1.
 
 If you specify just one of `height` or `width`, the other will be calculated based on the aspect ratio of the `src` image. The default height is 1. You can also specify both height and width to force a certain size. The map is always vertically 1 AFrame unit high, so adjust the entity's "scale" Y axis attribute to adjust the height.
 
+You can exlcude zero values in the data by using `ignoreZeroValues`, however if you do this you must use `scaleOpacity:true`, since the way the component hides these pixels is by setting them to 0% opacity. You can still set `opacityMin:1` to if you'd like all the >0 values to be displayed without any opacity.
 
 
 ### Color Palettes ###
 There are a few built-in palettes:
   `greypurple`, `aquablues`, `reds`, `redblue`, `grass`, `greens`, and `autumn`.
 These are taken from [ColorBrewer](http://colorbrewer2.org). You can also specify a palette as a JSON array, as shown in the example. To make a mono-colored surface, supply palette with a single entry, e.g `"...;  palette: ['#ff0000']; ..."`
+
 
 
 ### Particle mode ###
