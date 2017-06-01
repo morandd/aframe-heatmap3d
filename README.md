@@ -42,6 +42,7 @@ If you specify just one of `height` or `width`, the other will be calculated bas
 
 You can exlcude zero values in the data by using `ignoreZeroValues`, however if you do this you must use `scaleOpacity:true`, since the way the component hides these pixels is by setting them to 0% opacity. You can still set `opacityMin:1` to if you'd like all the >0 values to be displayed without any opacity.
 
+If you want to _stack_ several semi-tranparent maps, you have to place them in your AFrame scene (the HTML) in order from back toward the camera. AFrame seems to render things in the sequence they appear, so if you put something close to the camera, that will draw first and never do the Z-buffer opacity testing for items drawn behind it.
 
 ### Color Palettes ###
 There are a few built-in palettes:
