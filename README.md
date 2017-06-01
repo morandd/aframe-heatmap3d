@@ -24,7 +24,7 @@ scaleOpacity | Scale opacity of peaks? | true
 scaleOpacityMethod | "log" or "linear" scaling of opacity | "linear"
 opacityMin | Minimum opacity | 0.2 
 opacityMax | Max opacity | 1
-ignoreZeroValues | If true, zero values in the data will not be rendered | true
+ignoreZeroValues | If true, zero values in the data will not be rendered (note: requires `scaleOpacity` be true) | true
 stretch | If true, we will stretch the image values so they fill the range 0-255. | false
 stackBlurRadius | Blur effect. See below. | null
 stackBlurRadiusMobile | Blur effect. See below. | =stackBlurRadius
@@ -43,8 +43,10 @@ If you specify just one of `height` or `width`, the other will be calculated bas
 
 
 ### Color Palettes ###
-There are a few built-in palettes: `greypurple`, `aquablues`, `reds`, `redblue`, `grass`, `greens`, and `autumn`. These are taken from
-[ColorBrewer](http://colorbrewer2.org). You can also specify a palette as a JSON array, as shown in the example. To make a mono-colored surface, supply palette with a single entry, e.g `"...;  palette: ['#ff0000']; ..."`
+There are a few built-in palettes:
+  `greypurple`, `aquablues`, `reds`, `redblue`, `grass`, `greens`, and `autumn`.
+These are taken from [ColorBrewer](http://colorbrewer2.org). You can also specify a palette as a JSON array, as shown in the example. To make a mono-colored surface, supply palette with a single entry, e.g `"...;  palette: ['#ff0000']; ..."`
+
 
 ### Particle mode ###
 To render the map as particles instead of a continuous surface, specify renderMode:particles and optionally adjust the particleSize. It may be nice to fix the camera position if you use particle mode, because particles are always the same size regardless of how close/far the camera is from them. So when viewed from afar, we see a dense cloud, but when zoomed in, individual particles become hard to see as they are still small but now widely spaced.
