@@ -63,10 +63,10 @@ D3 is required.
 
 ```
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script> 
-<script src="https://morandd.github.io/aframe-heatmap3d/aframe-heatmap3d.js"></script>
+<script src="https://cdn.rawgit.com/morandd/aframe-heatmap3d/v1.0.0/aframe-heatmap3d.js"></script>
 
 <!-- Optional: Only needed if you want to use StackBlur. This minified file is copied from https://github.com/flozz/StackBlur  -->
-<script src="https://morandd.github.io/aframe-heatmap3d/example/stackblur.min.js"></script>
+<script src="https://cdn.rawgit.com/flozz/StackBlur/1.4.0/dist/stackblur.min.js"></script>
 
 ```
 
