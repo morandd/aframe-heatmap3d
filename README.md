@@ -20,8 +20,9 @@ Attribute | Description | Default
 src | Data to visualize: image URL or AFrame asset (e.g. '#myImage')  | |
 srcMobile | Alternative URL to use when viewing on mobile devices | |
 palette | Color palette | redblue |
+flipPalette | Flip color palette upside-down? | false
 scaleOpacity | Scale opacity of peaks? | true
-scaleOpacityMethod | "log" or "linear" scaling of opacity | "linear"
+scaleOpacityMethod | "log","log10", "linear", or "const" scaling of opacity | "linear"
 opacityMin | Minimum opacity | 0.2 
 opacityMax | Max opacity | 1
 ignoreZeroValues | If true, zero values in the data will not be rendered (note: requires `scaleOpacity` be true) | true
@@ -30,7 +31,15 @@ stackBlurRadius | Blur effect. See below. | null
 stackBlurRadiusMobile | Blur effect. See below. | =stackBlurRadius
 invertElevation | Default: white=1, black=0. If this is true, white=0, black=1 | false
 renderMode | "surface" or "particles" | surface
+wireframe | Display as wireframe? | false
+emissive | Emissive color for materials | #000000
+emissiveIntensity | EmissiveIntensity property for materials | 1
+shininess | Shininess property for phong material | 30
+metalness | Metalness property for standard material | 0.5
+roughness | Roughness property for standard material | 0.5
 particleSize | Particle size, for renderMode=particles | 1.0
+material | Material type: can be "lambert", "phong", or "standard". Ignored if per-vertex opacity is used | "standard"
+blending | Blending mode (as string, eg "THREE.AdditiveBlending") | THREE.NormalBlending
 height | depth of component (on Z axis, not Y axis) |  1
 width | width of component, in AFrame units | (see below)
 
@@ -40,14 +49,22 @@ so it fully covers elevation 0 to elevation 1.
 
 If you specify just one of `height` or `width`, the other will be calculated based on the aspect ratio of the `src` image. The default height is 1. You can also specify both height and width to force a certain size. The map is always vertically 1 AFrame unit high, so adjust the entity's "scale" Y axis attribute to adjust the height.
 
-You can exlcude zero values in the data by using `ignoreZeroValues`, however if you do this you must use `scaleOpacity:true`, since the way the component hides these pixels is by setting them to 0% opacity. You can still set `opacityMin:1` to if you'd like all the >0 values to be displayed without any opacity.
+You can exlcude zero values in the data by setting `ignoreZeroValues:true`. With this set to `true` the mesh will not contain any triangles over pixels with 0 value. This can result in visual 'islands', so you may wany to add a small nonzero offset to areas of the map (e.g. inside a region border) to avoid these islands.
 
-If you want to _stack_ several semi-tranparent maps, you have to place them in your AFrame scene (the HTML) in order from back toward the camera. AFrame seems to render things in the sequence they appear, so if you put something close to the camera, that will draw first and never do the Z-buffer opacity testing for items drawn behind it.
+The opacity/transparency logic is a bit complex. To use per-vertex opacity scaling, set `scaleOpacity:true`. This way you can make peaks more opaque and valleys more transparent. The min and max vertex opacity are controlled by `opacityMin` and `opacityMax`, and the function used to scale pixel values to opacity alpha values is given by `scaleOpacityMethod`. Set `scaleOpacityMethod:const` to set all vertices to use `opacityMin` as their alpha value.
+
+If you're using per-vertex opacity with a opacity scaling method other than "const" then the material will be a custom shader material that supports per-vertex opacity. But if you don't have different alpha value per vertex we can use a regular THREE material, so you can set 
+`material` to `phong`, `lambert`, or `standard` (default). The `metalicty`, `roughness`, `shininess`, and `blending` attributes all apply to the selected material.
+
+`wireframe` works as expected. Note that the mesh is quite tight-knit, so you may have to zoom in or change the `scale` of the terrain component to see the wireframe nicely.
+
+If you want to _stack_ several semi-tranparent maps, you have to place them in your AFrame scene (the HTML) in order from back toward the camera. AFrame seems to render things in the sequence they appear, so if you put something close to the camera, that will draw first and never do the Z-buffer opacity testing for items drawn behind it. You can also try `blending: THREE.AdditiveBlending`
 
 ### Color Palettes ###
 There are a few built-in palettes:
-  `greypurple`, `aquablues`, `reds`, `redblue`, `grass`, `greens`, and `autumn`.
-These are taken from [ColorBrewer](http://colorbrewer2.org). You can also specify a palette as a JSON array, as shown in the example. To make a mono-colored surface, supply palette with a single entry, e.g `"...;  palette: ['#ff0000']; ..."`
+  `greypurple`, `aquablues`, `reds`, `redblue`, `RdYlBu`, `grass`, `winter`, `greens`,  `autumn`, `hot`, `viridis`, `plasma`, `parula`, and `cool`.
+These are taken from MATLAB and [ColorBrewer](http://colorbrewer2.org). You can also specify a palette as a JSON array, as shown in the example. To make a mono-colored surface, supply palette with a single entry, e.g `"...;  palette: ['#ff0000']; ..."`
+
 
 
 

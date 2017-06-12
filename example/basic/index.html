@@ -2,7 +2,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>aframe-heatmap3d demo</title>
-	<script src="https://aframe.io/releases/0.5.0/aframe.min.js"></script> 
+	<script src="https://rawgit.com/aframevr/aframe/b6a082f/dist/aframe-master.min.js"></script> 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script> 
 
 
@@ -10,9 +10,10 @@
 	<!-- We will use StackBlur in this example -->
 	<script src="stackblur.min.js"></script>
 
+<!--
 	<script src="//cdn.rawgit.com/donmccurdy/aframe-extras/v3.7.0/dist/aframe-extras.min.js"></script>
-
 	<script src="https://cdn.rawgit.com/tizzle/aframe-orbit-controls-component/master/dist/aframe-orbit-controls-component.min.js"></script>
+-->
 
 	<!--
 	<script src="../aframe-orbit-camera-vrtoggle-component.js"></script>
@@ -30,12 +31,12 @@
 </head>
 
 <body>
-	<a-scene page_load_event aframe_orbit_camera_vrtoggle_component>
+	<a-scene page_load_event antialias="true">
 
 
 		<a-assets>
 			<img id="pngEU" src="eu_500.jpg"  style="display:none"/>
-			<img id="pngEUMobile" src="eu_500.jpg"  style="display:none"/>
+			<img id="pngEUMobile" src="eu_128.jpg"  style="display:none"/>
 		</a-assets>
 
 
@@ -55,15 +56,79 @@
 		<!--
 			Base image
 		-->
-		<a-image id="basemapEl" src="#pngEU" width="4" height="4"  rotation="-90 0 0" position="0 0 -0.001"> </a-image>
+		<a-image id="basemapEl" src="#pngEU" width="4" height="4"  rotation="-90 0 0" position="0 -0.0001 0"> </a-image>
+
 
 
 		<!--
 			The heightmap3d is placed on top.
 			It always has a height (Y axis) of 1, so we use 'scale' to control the height.
-		-->	
+		-->
 		<a-entity	
-		aframe-heatmap3d="src: #pngEU; srcMobile: #pngEUMobile;  scaleOpacity: true; palette:autumn; scaleOpacityMethod:lin; opacityMin: 0.7; stackBlurRadius:8.5; stackBlurRadiusMobile:0.5; width: 4; height: 4;" scale="1 0.23 1">
+		aframe-heatmap3d="
+		src: #pngEU;
+		srcMobile: #pngEUMobile;
+		ignoreZeroValues:true; 
+		stackBlurRadius:8.5;
+		stackBlurRadiusMobile:0.5;
+		palette:plasma;
+		flipPalette:false; 
+		scaleOpacity: true;
+		scaleOpacityMethod:log;
+		opacityMin: 0; 
+		 width: 4; height: 4;" scale="1 0.23 1">
+		</a-entity>
+
+
+
+		<!--Righhand map -->
+		<a-entity	
+		id="map2"
+		aframe-heatmap3d="
+		src: #pngEU;
+		ignoreZeroValues:false; 
+		stackBlurRadius:8.5;
+		stackBlurRadiusMobile:0.5;
+		palette:parula;
+		flipPalette:false; 
+		material: standard;
+		metalness:0.3;
+		roughness:0.2;
+		stretch:true;
+		shininess: 80;
+		scaleOpacity: false;
+		 width: 4; height: 4;" position="5 0 0" scale="1 0.23 1">
+		</a-entity>
+
+		<!-- Lefthand map. Use small PNG file to get widely spaced wireframe. -->
+		<a-entity	
+		id="map0"
+		aframe-heatmap3d="
+		src: #pngEUMobile;
+		stackBlurRadius:8.5;
+		palette:['#5522ff'];
+		wireframe:true;
+		material: standard;
+		metalness:0;
+		opacityMin:0.5;
+		 width: 4; height: 4;" position="-5 0 0" scale="1 1.43 1">
+		</a-entity>
+
+		<!-- Note that we use a lower-resolution image for the wireframe, so that we can get wider spacing between the wires -
+		material:standard; metalness:0.7; shininess:100; roughness:0.5; emissive:#fff; emissiveIntensity:0.06;
+		<a-entity	
+		aframe-heatmap3d="src: #pngEUMobile; wireframe:true; scaleOpacity: true; ignoreZeroValues:true; palette:['#ffaaaa']; flipPalette:true; scaleOpacityMethod:const; opacityMin: 0.1; stackBlurRadius:1.5; 
+		
+		 width: 4; height: 4;"  position="-0 0 -0" scale="1 0.23 1">
+		 <!-
+		 <a-animation attribute="aframe-heatmap3d.opacityMin"
+               dur="5000"
+               direction="alternate"
+               easing="linear"
+               from="0.01"
+               to="0.3"
+               repeat="indefinite"></a-animation>
+		-->
 		</a-entity>
 
 
@@ -78,8 +143,17 @@
 			material="visible:false">
 		</a-entity>
 
+		<!-- Default lighting injected by A-Frame. -
+		<a-entity light="type: ambient; color: #fff"></a-entity>
+		-->
+		<a-entity light="type: directional; target: target; color: #FFF; intensity: 0.5" position="2 4 5"></a-entity>
+		<a-entity light="intensity: 2; distance: 1; angle: 90; target: #map2; type:directional" position="5 5 3"></a-entity>
 
 
+		<!--
+		<a-entity light="type: point; intensity: 0.75; distance: 0; decay: 2"
+          position="0 10 0"></a-entity>
+	-->
 		<!-- 
 			Cameras.
 			Orbit cam for 2D and look-cam for VR, toggled using aframe_orbit_camera_vrtoggle_component.
@@ -88,6 +162,9 @@
 			camera="active:true"
 			id="camera_orbit"
 			position="2 3 5"
+			look-controls
+			keyboard-controls
+			wasd-controls
 			orbit-controls="
 			autoRotate: false;
 			target: #target;
