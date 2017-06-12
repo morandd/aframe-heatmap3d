@@ -51,7 +51,7 @@ If you specify just one of `height` or `width`, the other will be calculated bas
 
 You can exlcude zero values in the data by setting `ignoreZeroValues:true`. With this set to `true` the mesh will not contain any triangles over pixels with 0 value. This can result in visual 'islands', so you may wany to add a small nonzero offset to areas of the map (e.g. inside a region border) to avoid these islands.
 
-The opacity/transparency logic is a bit complex. To use per-vertex opacity scaling, set `scaleOpacity:true`. This way you can make peaks more opaque and valleys more transparent. The min and max vertex opacity are controlled by `opacityMin` and `opacityMax`, and the function used to scale pixel values to opacity alpha values is given by `scaleOpacityMethod`. Set `scaleOpacityMethod:const` to set all vertices to use `opacityMin` as their alpha value.
+The opacity/transparency logic is a bit complex. To use per-vertex opacity scaling, set `scaleOpacity:true`. This way you can make peaks more opaque and valleys more transparent. The min and max vertex opacity are controlled by `opacityMin` and `opacityMax`, and the function used to scale pixel values to opacity alpha values is given by `scaleOpacityMethod`. Set `scaleOpacityMethod:const` and `scaleOpacity:true` (the default) to set all vertices to use `opacityMin` as their alpha value.
 
 If you're using per-vertex opacity with a opacity scaling method other than "const" then the material will be a custom shader material that supports per-vertex opacity. But if you don't have different alpha value per vertex we can use a regular THREE material, so you can set 
 `material` to `phong`, `lambert`, or `standard` (default). The `metalicty`, `roughness`, `shininess`, and `blending` attributes all apply to the selected material.
@@ -103,5 +103,5 @@ Example:
 ## TODO ##
 - Improve handling of load sequence, use Promises and onload events properly.
 - Allow JSON input. To implement this, the user can specify a 2-dimensional array as JSON, or set of x/y/value points, which are drawn to a canvas then blurred.
-
+- Supporte texture mapped surface?
 
