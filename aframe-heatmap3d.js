@@ -473,22 +473,9 @@
         console.timeEnd("aframe-heatmap3d: update material");
    } // data.updateMaterial?
 
-this.material = new THREE.MeshStandardMaterial({wireframe:true});
 
-/*
-                this.material = new THREE.MeshStandardMaterial({
-                  transparent: data.scaleOpacity && data.scaleOpacityMethod==="const",
-                  opacity:     data.scaleOpacity ? data.opacityMin : 1,
-                  wireframe:   data.wireframe, 
-                  emissive:    new THREE.Color(data.emissive),
-                  emissiveIntensity: data.emissiveIntensity,
-                  metalness:   data.metalness,
-                  blending:    eval(data.blending),
-                  color:       '#ff0000',//this.palette.length==1 ? this.palette[0] : '#ffffff', 
-                  side:        THREE.DoubleSide,
-                  vertexColors:this.palette.length==1 ? THREE.NoColors : THREE.VertexColors
-                });
-*/
+
+
     if (data.updateGeometry || data.updateMaterial) {
         // Create the surface mesh and register it under entity's object3DMap
         var surface;
