@@ -26,7 +26,7 @@ scaleOpacityMethod | "log","log10", "linear", or "const" scaling of opacity | "l
 opacityMin | Minimum opacity | 0.2 
 opacityMax | Max opacity | 1
 ignoreZeroValues | If true, zero values in the data will not be rendered (note: requires `scaleOpacity` be true) | true
-ignoreTransparentValues | If true, pixels with zero opacity will not be rendered | true
+ignoreTransparentValues | If true, pixels with zero opacity will not be included in the terrain mesh | true
 stretch | If true, we will stretch the image values so they fill the range 0-255. | false
 stackBlurRadius | Blur effect. See below. | null
 stackBlurRadiusMobile | Blur effect. See below. | =stackBlurRadius
@@ -64,7 +64,7 @@ If you want to _stack_ several semi-tranparent maps, you have to place them in y
 ### Color Palettes ###
 There are a few built-in palettes:
   `greypurple`, `aquablues`, `reds`, `redblue`, `RdYlBu`, `grass`, `winter`, `greens`,  `autumn`, `hot`, `viridis`, `plasma`, `parula`, and `cool`.
-These are taken from MATLAB and [ColorBrewer](http://colorbrewer2.org). You can also specify a palette as a JSON array, as shown in the example. To make a mono-colored surface, supply palette with a single entry, e.g `"...;  palette: ['#ff0000']; ..."`
+These are taken from MATLAB and [ColorBrewer](http://colorbrewer2.org). You can also specify a palette as a JSON array, as shown in the example. See also the `MATLAB_PALETTE.m` file to see how to convert MATLAB colormaps to JSON strings. To make a mono-colored surface, supply palette with a single entry, e.g `"...;  palette: ['#ff0000']; ..."`
 
 
 
