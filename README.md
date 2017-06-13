@@ -104,5 +104,6 @@ Example:
 ## TODO ##
 - Improve handling of load sequence, use Promises and onload events properly.
 - Allow JSON input. To implement this, the user can specify a 2-dimensional array as JSON, or set of x/y/value points, which are drawn to a canvas then blurred.
+- Add options to tune material. Or change to check if a material= component is attached to the same entity, and then use that instead.
 - Supporte texture mapped surface?
 
