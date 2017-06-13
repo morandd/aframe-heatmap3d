@@ -176,6 +176,8 @@
       //var img = document.querySelectorAll('[src="' + (AFRAME.utils.device.isMobile() ?  data.srcMobile : data.src) + '"]');
       //img=img[0];
       var img = AFRAME.utils.device.isMobile() ?  data.srcMobile : data.src;
+      // This is handled differently by various versions of AFrame:
+      if (typeof img === "string") { img = document.querySelectorAll('[src="' + img + '"]'); img=img[0]; }
       if (img.complete) onImageLoaded(); else img.addEventListener("load",onImageLoaded);
       return;
       function onImageLoaded(){
