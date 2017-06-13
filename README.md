@@ -26,6 +26,7 @@ scaleOpacityMethod | "log","log10", "linear", or "const" scaling of opacity | "l
 opacityMin | Minimum opacity | 0.2 
 opacityMax | Max opacity | 1
 ignoreZeroValues | If true, zero values in the data will not be rendered (note: requires `scaleOpacity` be true) | true
+ignoreTransparentValues | If true, pixels with zero opacity will not be rendered | true
 stretch | If true, we will stretch the image values so they fill the range 0-255. | false
 stackBlurRadius | Blur effect. See below. | null
 stackBlurRadiusMobile | Blur effect. See below. | =stackBlurRadius

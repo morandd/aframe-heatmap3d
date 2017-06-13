@@ -35,7 +35,7 @@
 
 
 		<a-assets>
-			<img id="pngEU" src="eu_500.jpg"  style="display:none"/>
+			<img id="pngEU" src="eu_500_tst.png"  style="display:none"/>
 			<img id="pngEUMobile" src="eu_128.jpg"  style="display:none"/>
 		</a-assets>
 
@@ -54,9 +54,9 @@
 
 
 		<!--
-			Base image
+			Base image. Note that the image uses tranparency but this renders with ugly grey edges if transparent=true
 		-->
-		<a-image id="basemapEl" src="#pngEU" width="4" height="4"  rotation="-90 0 0" position="0 -0.0001 0"> </a-image>
+		<a-image id="basemapEl" src="#pngEU" width="4" height="4" transparent="false" rotation="-90 0 0" position="0 -0.01 0"> </a-image>
 
 
 
@@ -69,7 +69,7 @@
 		src: #pngEU;
 		srcMobile: #pngEUMobile;
 		ignoreZeroValues:true; 
-		stackBlurRadius:8.5;
+		stackBlurRadius:4.5;
 		stackBlurRadiusMobile:0.5;
 		palette:plasma;
 		flipPalette:false; 
@@ -106,12 +106,16 @@
 		aframe-heatmap3d="
 		src: #pngEUMobile;
 		stackBlurRadius:8.5;
-		palette:['#5522ff'];
+		palette: viridis;
 		wireframe:true;
 		material: standard;
-		metalness:0;
-		opacityMin:0.5;
-		 width: 4; height: 4;" position="-5 0 0" scale="1 1.43 1">
+		metalness:.7;
+		roughness: 1;
+		opacityMin:0.3;
+		shininess:0;
+		scaleOpacityMethod:const;
+		material:phong;
+		 width: 4; height: 4;" position="-5 0 0" scale="1 3 1">
 		</a-entity>
 
 		<!-- Note that we use a lower-resolution image for the wireframe, so that we can get wider spacing between the wires -
@@ -162,9 +166,8 @@
 			camera="active:true"
 			id="camera_orbit"
 			position="2 3 5"
-			look-controls
-			keyboard-controls
-			wasd-controls
+			look-controls="fly:true"
+			wasd-controls="fly:true"
 			orbit-controls="
 			autoRotate: false;
 			target: #target;

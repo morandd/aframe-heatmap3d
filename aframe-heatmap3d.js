@@ -49,6 +49,10 @@
       type: 'boolean',
       default: true
     },
+    ignoreTransparentValues: {
+      type: 'boolean',
+      default: true,
+    },
     stackBlurRadius: {
       type: 'number',
       default: -1
@@ -261,7 +265,7 @@
 
     var vi, ci; // Used in for loops for vertex indexing
 
-    data.updateGeometry = data.updateGeometry || ("invertElevation" in diff || "stretch" in diff || "ignoreZeroValues" in diff || "height" in diff || "width" in diff);
+    data.updateGeometry = data.updateGeometry || ("invertElevation" in diff || "stretch" in diff || "ignoreTransparentValues" in diff || "ignoreZeroValues" in diff || "height" in diff || "width" in diff);
 
     if (data.updateGeometry) {
           // Figure out our dimensions
@@ -306,6 +310,8 @@
           }
           for (ci=0; ci<heights.length; ci++ ){
             heights[ci] = 1- (heights[ci]-this.minPixelVal) /(this.maxPixelVal-this.minPixelVal);
+            //if (data.stackBlurRadius>0 && heights[ci]==1/255) heights[ci] = 0;
+            if (data.ignoreTransparentValues && this.imgBytes[ci*4 + 3]===0 ) heights[ci]=-1;
           }
 
 
@@ -314,7 +320,7 @@
            */
           console.time("aframe-heatmap3d: base geometry");
           //var geometry = new THREE.PlaneBufferGeometry(data.width, data.height, data.canvas.width-1, data.canvas.height-1);
-          this.geometry = new Heatmap3dPlaneBufferGeometry(data.width, data.height, this.canvas.width-1, this.canvas.height-1, heights, data.ignoreZeroValues);
+          this.geometry = new Heatmap3dPlaneBufferGeometry(data.width, data.height, this.canvas.width-1, this.canvas.height-1, heights, data.ignoreZeroValues, data.ignoreTransparentValues);
           console.timeEnd("aframe-heatmap3d: base geometry");
 
 
@@ -353,7 +359,7 @@
 
         for (vi=2, di=0, ci=0;    vi<NVERTS*3;   vi+=3, di++, ci+=4) {
           // Get this pixels' elevation, in the range 0-1. Do 1- so that white=0 and black=1
-          val = 1- (this.imgBytes[ci]-this.minPixelVal) /(this.maxPixelVal-this.minPixelVal);
+          val = Math.max(0, heights[di]);
 
           // Calculate opacity
           if (sm===-1) {
@@ -423,6 +429,7 @@
                   opacity:     data.opacityMin,
                   emissive:    new THREE.Color(data.emissive),
                   emissiveIntensity: data.emissiveIntensity,
+                  wireframe:   data.wireframe, 
                   blending:    eval(data.blending),
                   shininess:   data.shininess,
                   specular:    new THREE.Color(data.specular),
@@ -524,7 +531,7 @@ this.material = new THREE.MeshStandardMaterial({color:'#ff0000'});
 
 
 
-function Heatmap3dPlaneBufferGeometry( width, height, widthSegments, heightSegments, vals, skipZeros ) {
+function Heatmap3dPlaneBufferGeometry( width, height, widthSegments, heightSegments, vals, skipZeros, skipNegative ) {
 
   THREE.BufferGeometry.call( this );
 
@@ -583,64 +590,16 @@ function Heatmap3dPlaneBufferGeometry( width, height, widthSegments, heightSegme
       var c = ( ix + 1 ) + gridX1 * ( iy + 1 );
       var d = ( ix + 1 ) + gridX1 * iy;
 
-      // faces
-      // If skipZeros is false we draw the face no matter what
-      // If skipZeros is true, we draw the face only if we have one vertex.y>0
+      var drawFace = true;
+      if (skipZeros && Math.max(vertices[a*3+1], vertices[b*3+1],vertices[d*3+1])===0) drawFace=false;
+      if (skipNegative && Math.max(vertices[a*3+1], vertices[b*3+1],vertices[d*3+1])<1/255) drawFace=false;
+      if (drawFace) indices.push( a, b, d );
 
-      if (!skipZeros || Math.max(vertices[a*3+1], vertices[b*3+1],vertices[d*3+1])>0)
-      indices.push( a, b, d );
-      //indices.push( a, b, d );
+      drawFace = true;
+      if (skipZeros && Math.max(vertices[b*3+1], vertices[c*3+1],vertices[d*3+1])===0) drawFace=false;
+      if (skipNegative && Math.max(vertices[b*3+1], vertices[c*3+1],vertices[d*3+1])<1/255) drawFace=false;
+      if (drawFace) indices.push( b, c, d );
 
-      if (!skipZeros || Math.max(vertices[b*3+1], vertices[c*3+1],vertices[d*3+1])>0)
-      indices.push( b, c, d );
-
-/*
-// Calculate normal of this triangle
-//https://math.stackexchange.com/questions/305642/how-to-find-surface-normal-of-a-triangle
-var Vx = vertices[b*3+0] - vertices[a*3+0];
-var Vy = vertices[b*3+1] - vertices[a*3+1];
-var Vz = vertices[b*3+2] - vertices[a*3+2];
-var Wx = vertices[d*3+0] - vertices[a*3+0];
-var Wy = vertices[d*3+1] - vertices[a*3+1];
-var Wz = vertices[d*3+2] - vertices[a*3+2];
-
-var Nx = (Vy*Wz) - (Vz*Wy);
-var Ny = (Vz*Wx) - (Vx*Wz);
-var Nz = (Vx*Wy) - (Vy*Wx);
-var  share = 0.3;
-
-normals[a*3+0] += share * Nx;
-normals[a*3+1] += share * Ny;
-normals[a*3+2] += share * Nz;
-normals[b*3+0] += share * Nx;
-normals[b*3+1] += share * Ny;
-normals[b*3+2] += share * Nz;
-normals[d*3+0] += share * Nx;
-normals[d*3+1] += share * Ny;
-normals[d*3+2] += share * Nz;
-
-
-
-Vx = vertices[c*3+0] - vertices[b*3+0];
-Vy = vertices[c*3+1] - vertices[b*3+1];
-Vz = vertices[c*3+2] - vertices[b*3+2];
-Wx = vertices[d*3+0] - vertices[b*3+0];
-Wy = vertices[d*3+1] - vertices[b*3+1];
-Wz = vertices[d*3+2] - vertices[b*3+2];
-Nx = (Vy*Wz) - (Vz*Wy);
-Ny = (Vz*Wx) - (Vx*Wz);
-Nz = (Vx*Wy) - (Vy*Wx);
-
-normals[b*3+0] -= share * Nx;
-normals[b*3+1] -= share * Ny;
-normals[b*3+2] -= share * Nz;
-normals[c*3+0] -= share * Nx;
-normals[c*3+1] -= share * Ny;
-normals[c*3+2] -= share * Nz;
-normals[d*3+0] -= share * Nx;
-normals[d*3+1] -= share * Ny;
-normals[d*3+2] -= share * Nz;
-*/
     }
 
   }
@@ -653,6 +612,7 @@ normals[d*3+2] -= share * Nz;
     normals[ix+0] /= l;
     normals[ix+1] /= l;
     normals[ix+2] /= l;
+    vertices[ix+1] = Math.max(0, vertices[ix+1]); // Convert any -1 Y value vertices (those with alpha=0) to 0. 
   }
 
   // build geometry
