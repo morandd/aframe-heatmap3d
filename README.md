@@ -63,7 +63,7 @@ If you want to _stack_ several semi-tranparent maps, you have to place them in y
 
 ### Color Palettes ###
 There are a few built-in palettes:
-  `greypurple`, `aquablues`, `reds`, `redblue`, `RdYlBu`, `grass`, `winter`, `greens`,  `autumn`, `hot`, `viridis`, `plasma`, `inferno`, `parula`, and `cool`.
+  `greypurple`, `aquablues`, `reds`, `terrain`, `redblue`, `RdYlBu`, `terrain`, `purples`, `grass`, `winter`, `greens`,  `autumn`, `hot`, `viridis`, `plasma`, `inferno`, `parula`, and `cool`.
 These are taken from MATLAB and [ColorBrewer](http://colorbrewer2.org). You can also specify a palette as a JSON array, as shown in the example. See also the `MATLAB_PALETTE.m` file to see how to convert MATLAB colormaps to JSON strings. To make a mono-colored surface, supply palette with a single entry, e.g `"...;  palette: ['#ff0000']; ..."`
 
 
