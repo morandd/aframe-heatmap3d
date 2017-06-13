@@ -486,7 +486,7 @@
           surface = new THREE.Points(this.geometry, this.material);
 
         }
-        el.setObject3D('terrain-heatmap', surface);
+        el.setObject3D('mesh', surface);
     } /// Update geometry || material
   }, // end function update()
 
@@ -494,7 +494,7 @@
 
 
    remove: function () {
-    this.el.removeObject3D('terrain-heatmap');
+    this.el.removeObject3D('mesh');
   }
 
 });
