@@ -289,29 +289,28 @@
 
 
           // Do a pass over the data to get max and min values
+          // We also do the invertElevation operation here. Normally black=100% elevation and white=0 elevation
           this.maxPixelVal=0;
           this.minPixelVal=255;
           if (data.stretch) {
            for (ci=0; ci<this.imgBytes.length; ci+=4) {
+            if (data.invertElevation) this.imgBytes[ci]=255-this.imgBytes[ci];
              this.maxPixelVal = Math.max(this.maxPixelVal, this.imgBytes[ci]);
              this.minPixelVal = Math.min(this.minPixelVal, this.imgBytes[ci]);
            }
           } else {
+           for (ci=0; ci<this.imgBytes.length; ci+=4) { if (data.invertElevation)this.imgBytes[ci]=255-this.imgBytes[ci];}
            this.maxPixelVal = 255; this.minPixelVal=0;
           }
 
           // Extract heights from image data
           // In the image white=255 RGB but equals 0 elevation, and black=0=1 elevation
           for (ci=0, di=0; ci<this.imgBytes.length; ci+=4) {
-            // But maybe the user wants to invert this, so that black=0 elevation and white=1. We do that here.
-            if (data.invertElevation) {
-              heights[di++] = 255 - this.imgBytes[ci];
-            } else {
               heights[di++] = this.imgBytes[ci];
-            }
           }
           for (ci=0; ci<heights.length; ci++ ){
             heights[ci] = 1- (heights[ci]-this.minPixelVal) /(this.maxPixelVal-this.minPixelVal);
+            //if (data.invertElevation) heights[ci]=1-heights[ci];
             //if (data.stackBlurRadius>0 && heights[ci]==1/255) heights[ci] = 0;
             if (data.ignoreTransparentValues && this.imgBytes[ci*4 + 3]===0 ) heights[ci]=-1;
           }
@@ -474,9 +473,9 @@
         console.timeEnd("aframe-heatmap3d: update material");
    } // data.updateMaterial?
 
-/*
-this.material = new THREE.MeshStandardMaterial({color:'#ff0000'});
+this.material = new THREE.MeshStandardMaterial({wireframe:true});
 
+/*
                 this.material = new THREE.MeshStandardMaterial({
                   transparent: data.scaleOpacity && data.scaleOpacityMethod==="const",
                   opacity:     data.scaleOpacity ? data.opacityMin : 1,
@@ -569,7 +568,7 @@ function Heatmap3dPlaneBufferGeometry( width, height, widthSegments, heightSegme
       var x = ix * segment_width - width_half;
 
       // Note we bake in a rotateX(-90) operation here, as compared to THREE.PlaneBufferGeometry
-      vertices.push( x,   vals[iy*gridY1 + ix ] , y );
+      vertices.push( x,   vals[iy*gridX1 + ix ] , y );
 
       normals.push( 1,1, 1 );
 
@@ -593,14 +592,18 @@ function Heatmap3dPlaneBufferGeometry( width, height, widthSegments, heightSegme
       var d = ( ix + 1 ) + gridX1 * iy;
 
       var drawFace = true;
-      if (skipZeros && Math.max(vertices[a*3+1], vertices[b*3+1],vertices[d*3+1])===0) drawFace=false;
-      if (skipNegative && Math.max(vertices[a*3+1], vertices[b*3+1],vertices[d*3+1])<1/255) drawFace=false;
-      if (drawFace) indices.push( a, b, d );
+      var x=Math.max(vertices[a*3+1], vertices[b*3+1],vertices[d*3+1]);
+      if (skipZeros && x===0) drawFace=false;
+      if (skipNegative && x<0) drawFace=false;
+      if (drawFace) 
+        indices.push( a, b, d );
 
       drawFace = true;
-      if (skipZeros && Math.max(vertices[b*3+1], vertices[c*3+1],vertices[d*3+1])===0) drawFace=false;
-      if (skipNegative && Math.max(vertices[b*3+1], vertices[c*3+1],vertices[d*3+1])<1/255) drawFace=false;
-      if (drawFace) indices.push( b, c, d );
+      x=Math.max(vertices[b*3+1], vertices[c*3+1],vertices[d*3+1]);
+      if (skipZeros &&x===0) drawFace=false;
+      if (skipNegative && x<0) drawFace=false;
+      if (drawFace) 
+        indices.push( b, c, d );
 
     }
 
