@@ -347,7 +347,7 @@
 
     data.updateMaterial = (this.material===undefined || "emissive" in diff || "flipPalette" in diff || "roughness" in diff  || "metalness" in diff  || "shininess" in diff || "emissiveIntensity" in diff || "opacityMin" in diff || "opacityMax" in diff || "palette" in diff || "scaleOpacityMethod" in diff ||"scaleOpacity" in diff || "wireframe" in diff || "material" in diff  || "renderMode" in diff  || "particleSize" in diff  );
 
-    if (data.updateMaterial ) {
+    if (data.updateMaterial || data.updateGeometry ) {
         console.time("aframe-heatmap3d: update material");
 
         // Use D3's color mapping functions to map values to the color palette
