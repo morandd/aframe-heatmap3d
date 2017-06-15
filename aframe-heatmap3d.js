@@ -1,6 +1,16 @@
 
 
 
+window.tic = function(){
+  return new Date();
+};
+
+// Return elapsed milisconds
+window.toc = function(ticStart){
+  var elapsed = new Date() - ticStart;
+  //elapsed = elapsed.getTime();
+  return (elapsed/1000).toFixed(2);
+};
 
 
 /**
@@ -107,7 +117,7 @@
       type: 'number', default: 0.5
     },
     blending: {
-      type: 'string', default: 'THREE.NormalBlending'
+      type: 'string', default: 'THREE.NoBlending'
     },
     specular: { type: 'color', default: '#111111'}
   },
@@ -190,10 +200,11 @@
 //        document.body.appendChild(data.canvas);
         var blurRadius = AFRAME.utils.device.isMobile() ?  data.stackBlurRadiusMobile  : data.stackBlurRadius;
         thisComponent.canvas.getContext('2d').drawImage(img, 0, 0);
+        thisComponent.time_blur = 0;
         if (blurRadius>0) {
-          console.time("aframe-heatmap3d: blur image");
+          thisComponent.time_blur = window.tic();
           StackBlur.canvasRGBA(thisComponent.canvas, 0, 0, img.width,  img.height, blurRadius);
-          console.timeEnd("aframe-heatmap3d: blur image");
+          thisComponent.time_blur = window.toc(thisComponent.time_blur);
         }
         thisComponent.canvasContext =  thisComponent.canvas.getContext('2d');
         thisComponent.canvasReady=true;
@@ -317,10 +328,10 @@
           /*
            Create the plane geometry
            */
-          console.time("aframe-heatmap3d: base geometry");
+           this.time_geom = window.tic();
           //var geometry = new THREE.PlaneBufferGeometry(data.width, data.height, data.canvas.width-1, data.canvas.height-1);
           this.geometry = new Heatmap3dPlaneBufferGeometry(data.width, data.height, this.canvas.width-1, this.canvas.height-1, this.heights, data.ignoreZeroValues, data.ignoreTransparentValues);
-          console.timeEnd("aframe-heatmap3d: base geometry");
+          this.time_geom = window.toc(this.time_geom);
 
 
           //this.geometry.rotateX(-90 * Math.PI / 180 );
@@ -348,7 +359,7 @@
     data.updateMaterial = (this.material===undefined || "emissive" in diff || "flipPalette" in diff || "roughness" in diff  || "metalness" in diff  || "shininess" in diff || "emissiveIntensity" in diff || "opacityMin" in diff || "opacityMax" in diff || "palette" in diff || "scaleOpacityMethod" in diff ||"scaleOpacity" in diff || "wireframe" in diff || "material" in diff  || "renderMode" in diff  || "particleSize" in diff  );
 
     if (data.updateMaterial || data.updateGeometry ) {
-        console.time("aframe-heatmap3d: update material");
+      this.time_material = window.tic();
 
         // Use D3's color mapping functions to map values to the color palette
         if (!this.funcColorize || "palette" in diff) {
@@ -401,7 +412,7 @@
             vertexShader:   this.customVertexShader,
             fragmentShader: this.customFragShader,
             depthTest:      true,
-            side:           THREE.DoubleSide,
+            //side:           THREE.DoubleSide,
             transparent:    true,
             vertexColors:THREE.VertexColors
           });
@@ -467,8 +478,7 @@
 
           }
         }
-
-        console.timeEnd("aframe-heatmap3d: update material");
+        this.time_material = window.toc(this.time_material);
    } // data.updateMaterial?
 
 
@@ -488,6 +498,8 @@
         }
         el.setObject3D('mesh', surface);
     } /// Update geometry || material
+
+    console.log('aframe-heatmap3d: Blur ' + this.time_blur +"s / geometry " + this.time_geom + "s / material " + this.time_material +"s" );
   }, // end function update()
 
 
@@ -595,14 +607,10 @@ function Heatmap3dPlaneBufferGeometry( width, height, widthSegments, heightSegme
   }
 
 
-  // Normalize the normal vectors to be unit vectors
+  // Convert any -1 Y value vertices (those with alpha=0) to 0. 
+  // Note this cannot be done in the above loop because vertices are shared
   for (ix=0;ix<normals.length; ix+=3){
-    var x = normals[ix+0]; var y=normals[ix+1]; var z=normals[ix+2];
-    var l =Math.sqrt(x^2 + y^2 + z^2);
-    normals[ix+0] /= l;
-    normals[ix+1] /= l;
-    normals[ix+2] /= l;
-    vertices[ix+1] = Math.max(0, vertices[ix+1]); // Convert any -1 Y value vertices (those with alpha=0) to 0. 
+    vertices[ix+1] = Math.max(0, vertices[ix+1]); 
   }
 
   // build geometry
@@ -612,6 +620,7 @@ function Heatmap3dPlaneBufferGeometry( width, height, widthSegments, heightSegme
   this.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
   //this.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
   this.computeVertexNormals();
+  //this.computeFaceNormals();
 
   //this.addAttribute( 'uv', new THREE.Float32BufferAttribute( uvs, 2 ) );
 
