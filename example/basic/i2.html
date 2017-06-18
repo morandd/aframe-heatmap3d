@@ -1,0 +1,165 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>aframe-heatmap3d demo</title>
+	<script src="https://rawgit.com/aframevr/aframe/b6a082f/dist/aframe-master.min.js"></script> 
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script> 
+
+
+	<script src="../../aframe-heatmap3d.js"></script>
+	<!-- We will use StackBlur in this example -->
+	<script src="stackblur.min.js"></script>
+
+<!--
+	<script src="//cdn.rawgit.com/donmccurdy/aframe-extras/v3.7.0/dist/aframe-extras.min.js"></script>
+	<script src="https://cdn.rawgit.com/tizzle/aframe-orbit-controls-component/master/dist/aframe-orbit-controls-component.min.js"></script>
+-->
+
+	<!--
+	<script src="../aframe-orbit-camera-vrtoggle-component.js"></script>
+	-->
+
+
+	<script type="text/javascript">
+	AFRAME.registerComponent('page_load_event', {
+		play: function(){
+			d3.select('#loading').transition().duration(3000).attr('opacity', "0").remove();
+		}
+	});
+	</script>
+
+</head>
+
+<body>
+	<a-scene page_load_event antialias="true">
+
+
+		<a-assets>
+			<img id="pngEU" src="p_tot.png"  style="display:none"/>
+			<img id="pngEUMobile" src="eu_128.jpg"  style="display:none"/>
+		</a-assets>
+
+
+		<!--
+			Sky.
+		-->
+		<a-sky color="#eee"></a-sky>
+		<!-- Holodeck skybox -->
+
+
+		<!--
+			Loading indicator (wireframe box)
+		-->
+		<a-box id="loading" depth="4" height="1"  width="4" color="#aaa" wireframe="true" opacity="0.5" position="0 0.5 0"></a-box>
+
+
+		<!--
+			Base image. Note that the image uses tranparency but this renders with ugly grey edges if transparent=true
+		-->
+		<a-image id="basemapEl" src="#pngEU" width="4" height="2" transparent="false" rotation="-90 0 0" position="0 -0.01 0"> </a-image>
+
+
+
+		<!--
+			The heightmap3d is placed on top.
+			It always has a height (Y axis) of 1, so we use 'scale' to control the height.
+		-->
+		<a-entity	
+		aframe-heatmap3d="
+		src: #pngEU;
+		ignoreZeroValues:false;
+		ignoreTransparentValues:true;
+		palette:inferno;
+		flipPalette:true; 
+		stackBlurRadius: 2; 
+		invertElevation:true;
+		scaleOpacity:true;
+		scaleOpacityMethod:log10;
+		opacityMin: 0.9; 
+		 width: 4; height: 2;" scale="1 0.23 1">
+		</a-entity>
+
+
+
+		<!--Righhand map -->
+		<a-entity	
+		id="map2"
+		aframe-heatmap3d="
+		src: #pngEU;
+		ignoreZeroValues:false; 
+		palette:plasma;
+		invertElevation:true;
+		flipPalette:false; 
+		material: standard;
+		metalness:0.3;
+		roughness:0.2;
+		stretch:true;
+		shininess: 80;
+		scaleOpacity: false;
+		 width: 4; height: 4;" position="5 0 0" scale="1 0.23 1">
+		</a-entity>
+
+
+
+
+
+
+		<!--
+			Target for orbit camera
+		-->
+		<a-entity
+			id="target"
+			geometry="primitive: box"
+			position="0 0 0"
+			material="visible:false">
+		</a-entity>
+
+		<!-- Default lighting injected by A-Frame. -
+		<a-entity light="type: ambient; color: #fff"></a-entity>
+		-->
+		<a-entity light="type: directional; target: target; color: #FFF; intensity: 0.5" position="2 4 5"></a-entity>
+		<a-entity light="intensity: 2; distance: 1; angle: 90; target: #map2; type:directional" position="5 5 3"></a-entity>
+
+
+		<!--
+		<a-entity light="type: point; intensity: 0.75; distance: 0; decay: 2"
+          position="0 10 0"></a-entity>
+	-->
+		<!-- 
+			Cameras.
+			Orbit cam for 2D and look-cam for VR, toggled using aframe_orbit_camera_vrtoggle_component.
+		-->
+		<a-entity
+			camera="active:true"
+			id="camera_orbit"
+			position="2 3 5"
+			look-controls="fly:true"
+			wasd-controls="fly:true"
+			orbit-controls="
+			autoRotate: false;
+			target: #target;
+			enableDamping: true;
+			dampingFactor: 0.125;
+			rotateSpeed:0.15;
+			zoomSpeed:0.5;
+			maxPolarAngle:1.85;
+			minDistance:1;
+			maxDistance:10;">
+		</a-entity>
+
+		<a-entity
+			camera="active:false"
+			id="camera_look"
+			position="0 2 3"
+			rotation="-35 0 0"
+			look-controls
+			wasd-controls="fly:true" 
+			mouse-cursor="">
+		</a-entity>
+
+	</a-scene>
+
+
+</body>
+
+</html>

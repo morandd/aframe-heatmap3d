@@ -13,6 +13,19 @@ window.toc = function(ticStart){
 };
 
 
+function hexToRgb(hex) {
+    if (hex[0]=="#") hex = hex.slice(1); // Chomp leading #
+    var bigint = parseInt(hex, 16);
+    var r = (bigint >> 16) & 255;
+    var g = (bigint >> 8) & 255;
+    var b = bigint & 255;
+    return [r,g,b];
+}
+
+
+
+
+
 /**
  * Terrain heatmap/heightmap model component for A-Frame.
  */
@@ -119,6 +132,12 @@ window.toc = function(ticStart){
     blending: {
       type: 'string', default: 'THREE.NoBlending'
     },
+    loadingAnimDur:  {
+      type: "number", default: 1800
+    },
+    unloadingAnimDur:{
+      type: "number", default: 1500
+    },
     specular: { type: 'color', default: '#111111'}
   },
 
@@ -126,35 +145,77 @@ window.toc = function(ticStart){
 
   init: function() {
     this.data.stackBlurRadiusMobile  = this.data.stackBlurRadiusMobile>=0 ?  this.data.stackBlurRadiusMobile : this.data.stackBlurRadius;
+    this.el.components.scale.desiredY = this.el.components.scale.data.y;
     this.canvas = document.createElement('canvas');
     this.canvas.setAttribute("width", 0);
     this.canvas.setAttribute("height", 0);
     this.canvasContext =  this.canvas.getContext('2d');
     this.canvasReady=false;
+    this.vscale = 1;
   },
 
 
   customVertexShader: '' +
-    '     attribute float opacity;' +
-    '     varying vec3 vColor;' +
-    '     varying float vOpacity;' +
+    '     attribute float opacity;' + // Overall opacity
+    '     attribute float height01;' + // Desired height of this vertex
+//    '     varying vec4 vColor;' +
+    '     varying float vOpacity;' + // passed to the frag shader via the interpolator
+    '     varying float vHeight;' + // Passed to the frag shader via the interpolator
+//    '     uniform sampler2D paletteTexture; ' +
+    '     uniform float vscale;' + // Scaling uniform used to drive animations
+    '     vec3 positionAdj; ' + 
     '     void main() {' +
-    '       vColor = color;' +
-    '       vOpacity = opacity;' +
-    '       gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );;' +
+    '       vHeight = height01 * vscale;' + 
+    '       vOpacity = opacity * vscale;' + 
+    '       positionAdj  = position; positionAdj.y = positionAdj.y * vscale; ' +
+    '       gl_Position = projectionMatrix * modelViewMatrix * vec4( positionAdj, 1.0 );;' +
     '     }',
 
   customFragShader: '' +
-    '     varying vec3 vColor;' +
+    //'     varying vec4 vColor;' +
+    '     varying float vHeight;' +
     '     varying float vOpacity;' +
+    '     uniform sampler2D paletteTexture; ' +
+    '     vec4 c;' +
     '     void main() {' +
-    '       gl_FragColor = vec4( vColor, vOpacity );' +
+    '       c = texture2D(paletteTexture, vec2(vHeight, 0.0));' +
+    '       c.w = vOpacity;' +
+    '       gl_FragColor = c;' +
     '     }',
 
 
   customPointsVertexShader: '' +
+    '     uniform float pointsize;' +
+    '     uniform float vscale;' + // Scaling uniform used to drive animations
+    '     attribute float opacity;' + // Overall opacity
+    '     attribute float height01;' + // Desired height of this vertex
+    '     varying float vOpacity;' + // passed to the frag shader via the interpolator
+    '     varying float vHeight;' + // Passed to the frag shader via the interpolator
+    '     vec3 positionAdj; ' + 
+    '     void main() {' +
+    '       vHeight = height01 * vscale;' + 
+    '       vOpacity = opacity * vscale;' + 
+    '       positionAdj  = position; positionAdj.y = positionAdj.y * vscale; ' +
+    '       gl_PointSize = pointsize;' +
+    '       gl_Position = projectionMatrix * modelViewMatrix * vec4( positionAdj, 1.0 );;' +
+    '     }',
+
+  customPointsFragShader: '' +
+    //'     varying vec4 vColor;' +
+    '     varying float vHeight;' +
+    '     varying float vOpacity;' +
+    '     uniform sampler2D paletteTexture; ' +
+    '     vec4 c;' +
+    '     void main() {' +
+    '       c = texture2D(paletteTexture, vec2(vHeight, 0.0));' +
+    '       c.w = 1.0;' +
+    '       gl_FragColor = c;' +
+    '     }',
+/*
+  customPointsVertexShader: '' +
     '     varying vec3 vColor;' +
     '     uniform float pointsize;' +
+    //'     uniform float vscale;' +
     '     void main() {' +
     '       vColor = color;' +
     '       gl_PointSize = pointsize;' +
@@ -163,9 +224,11 @@ window.toc = function(ticStart){
 
   customPointsFragShader: '' +
     '     varying vec3 vColor;' +
+    //'     uniform float vscale;' +
     '     void main() {' +
     '       gl_FragColor = vec4( vColor, 1.0 );' +
     '     }',
+*/
 
   /**
    * Called when component is attached and when component data changes.
@@ -175,12 +238,20 @@ window.toc = function(ticStart){
     var thisComponent = this;
     var el = this.el;
     var data = this.data;
+    var vi, ci; // Used in for loops for vertex indexing
 
     data.src = data.src || ''; // If user does not specify, this is 'undefined' instead of ''. Fix here.
     data.srcMobile = data.srcMobile || ''; 
 
     var diff = AFRAME.utils.diff(data, oldData);
 
+
+
+    /*
+     * Here we handle loading the source image (render to a canvas) and applying the StackBlur.
+     * Then we issue a callback to update() when we're ready.
+     */
+    if (data.src==='') return;
 
     if ("src" in diff) { //} && (data.src.length>0 || data.srcMobile.length>0)) {
       //var img = document.querySelectorAll('[src="' + (AFRAME.utils.device.isMobile() ?  data.srcMobile : data.src) + '"]');
@@ -229,11 +300,41 @@ window.toc = function(ticStart){
     }
 
 
+
+    /*
+     * Here we run the unloading animation, if there is an existing geometry to unload
+     */
+    if (data.unloadingAnimDur>0 && !d3 ) {
+      data.unloadingAnimDur = 0;
+      console.log('aframe-heatmap3d: skiping unloading animation since d3 is not available');
+      data.unloadingAnimCompleted = true;
+    }
+    if (data.unloadingAnimDur===0) data.unloadingAnimCompleted = true; // If no animation was requested, we're already done :)
+    if (!this.el.getObject3D('mesh')) data.unloadingAnimCompleted = true; // If we have no geometry (first time we get loaded), we're already done
+    if (!data.unloadingAnimCompleted) {
+      //Then play the flatten animation
+      d3.select(this.el).transition().duration(data.loadingAnimDur).tween('vscale.tween',function(datum, index){
+        return function(t){
+          this.vscale = (1-t);
+          if (this.material.uniforms) this.material.uniforms.vscale.value = (1-t);
+        }.bind(thisComponent);
+      }).on("end", function(){
+        // Call back to update() after flattening animation has completed
+        this.data.unloadingAnimCompleted = true;
+        this.update(data);
+      }.bind(thisComponent));
+      return;
+    } // Set up unloading animation?
+
+
+
+
     /*
      * Convert palette string into array of colors
      * We put built-in palettes here too.
+     * Create a 1xN THREE.Texture based on the palette, for use in the shader.
      */
-    if ("palette" in diff || !Array.isArray(this.palette)) {
+    if ("palette" in diff || !Array.isArray(this.palette) || (!this.paletteTexture)) {
       if ("greypurple" === data.palette) {
         this.palette=['#f7fcfd','#e0ecf4','#bfd3e6','#9ebcda','#8c96c6','#8c6bb1','#88419d','#6e016b'];
       } else if ("aquablues" === data.palette) {
@@ -272,10 +373,32 @@ window.toc = function(ticStart){
       } else {
         this.palette  = JSON.parse(data.palette.replace(/'/g ,'"'));
       }
+
+      // Create a 1xN texture based on this palette
+      this.paletteTexture = palette2texture(this.palette);
+      /*
+      this.paletteCanvas = document.createElement('canvas');
+      this.paletteCanvas.id = "paletteCanvas" +Math.random();
+      this.paletteCanvas.width = this.palette.length; this.paletteCanvas.height=1;
+      var ctx = this.paletteCanvas.getContext('2d');
+      var id = ctx.createImageData(this.paletteCanvas.width,1);
+      for (var i=0, j=0; i<this.paletteCanvas.width; i++){
+        var a = hexToRgb(this.palette[i])
+        id.data[j++] = a[0]; // r
+        id.data[j++] = a[1]; // g 
+        id.data[j++] = a[2]; // b
+        id.data[j++] = 255; // alpha is always 255 
+      }
+      ctx.putImageData( id, 0,0); 
+      this.paletteTexture = new THREE.Texture(this.paletteCanvas);
+      document.body.appendChild(this.paletteCanvas);
+      */
     }
 
-    var vi, ci; // Used in for loops for vertex indexing
 
+    /* 
+     * Shall we build/update the geometry?
+    */
     data.updateGeometry = data.updateGeometry || ("invertElevation" in diff || "stretch" in diff || "ignoreTransparentValues" in diff || "ignoreZeroValues" in diff || "height" in diff || "width" in diff);
 
     if (data.updateGeometry) {
@@ -314,13 +437,12 @@ window.toc = function(ticStart){
 
           // Extract heights from image data
           // In the image white=255 RGB but equals 0 elevation, and black=0=1 elevation
+          // TODO: Collapse these two loops into one
           for (ci=0, di=0; ci<this.imgBytes.length; ci+=4) {
               this.heights[di++] = this.imgBytes[ci];
           }
           for (ci=0; ci<this.heights.length; ci++ ){
             this.heights[ci] = 1- (this.heights[ci]-this.minPixelVal) /(this.maxPixelVal-this.minPixelVal);
-            //if (data.invertElevation) heights[ci]=1-heights[ci];
-            //if (data.stackBlurRadius>0 && heights[ci]==1/255) heights[ci] = 0;
             if (data.ignoreTransparentValues && this.imgBytes[ci*4 + 3]===0 ) this.heights[ci]=-1;
           }
 
@@ -328,14 +450,13 @@ window.toc = function(ticStart){
           /*
            Create the plane geometry
            */
-           this.time_geom = window.tic();
-          //var geometry = new THREE.PlaneBufferGeometry(data.width, data.height, data.canvas.width-1, data.canvas.height-1);
+          this.time_geom = window.tic();
           this.geometry = new Heatmap3dPlaneBufferGeometry(data.width, data.height, this.canvas.width-1, this.canvas.height-1, this.heights, data.ignoreZeroValues, data.ignoreTransparentValues);
           this.time_geom = window.toc(this.time_geom);
 
 
-          //this.geometry.rotateX(-90 * Math.PI / 180 );
     } // end data.updateGeometry?
+
 
 
 
@@ -350,6 +471,7 @@ window.toc = function(ticStart){
     var NVERTS = this.geometry.attributes.position.count;
     var vertexColors = new Float32Array( NVERTS * 3 );
     var vertexOpacities = new Float32Array( NVERTS);
+    var vertexHeights = new Float32Array( NVERTS );
     var sm= data.scaleOpacity ? 0 : -1; // Shorthand value for scaleOpacityMethod
     if (data.scaleOpacityMethod==="log") sm=1;
     if (data.scaleOpacityMethod==="log10") sm=2;
@@ -370,6 +492,8 @@ window.toc = function(ticStart){
         for (vi=2, di=0, ci=0;    vi<NVERTS*3;   vi+=3, di++, ci+=4) {
           // Get this pixels' elevation, in the range 0-1. Do 1- so that white=0 and black=1
           val = Math.max(0, this.heights[di]);
+
+          vertexHeights[di] = val;
 
           // Calculate opacity
           if (sm===-1) {
@@ -392,12 +516,14 @@ window.toc = function(ticStart){
           vertexColors[vi-2] = ((bigint >> 16) & 255) / 255.0;
           vertexColors[vi-1] = ((bigint >> 8) & 255) / 255.0;
           vertexColors[vi-0] = (bigint & 255) / 255.0;
+
         }
 
 
         // Add the vertex coloring and opacity data to the geometry
         this.geometry.addAttribute( 'color', new THREE.BufferAttribute( vertexColors, 3 ) );
         this.geometry.addAttribute( 'opacity', new THREE.BufferAttribute( vertexOpacities, 1 ) );
+        this.geometry.addAttribute( 'height01', new THREE.BufferAttribute( vertexHeights, 1 ) );
 
 
 
@@ -408,14 +534,21 @@ window.toc = function(ticStart){
          * If there is no transparency, we can use a normal Lambert material.
          */
         if (data.scaleOpacity && data.scaleOpacityMethod!=="const" && data.material=="default" && !data.wireframe) {
+          this.paletteTexture.needsUpdate = true;
           this.material = new THREE.ShaderMaterial({
+            uniforms: {
+              vscale:         { type: 'f', value: this.vscale },
+              paletteSize:    { type: 'f', value: this.palette.length},
+              paletteTexture: { type: 't', value: this.paletteTexture }
+            },
             vertexShader:   this.customVertexShader,
             fragmentShader: this.customFragShader,
             depthTest:      true,
-            //side:           THREE.DoubleSide,
+            //side:         THREE.DoubleSide,
             transparent:    true,
-            vertexColors:THREE.VertexColors
+            vertexColors:   THREE.VertexColors
           });
+          this.material.uniforms.paletteTexture.value.needsUpdate = true;
         } else {
           if ("surface" === data.renderMode) {
             if (data.scaleOpacity && data.scaleOpacityMethod!="const" && data.material.toLowerCase() !="standard"){
@@ -424,18 +557,18 @@ window.toc = function(ticStart){
             }
             if (data.material.toLowerCase()==="lambert") {
                 this.material = new THREE.MeshLambertMaterial({
-                  transparent: data.scaleOpacity && data.scaleOpacityMethod==="const",
+                  transparent: (data.scaleOpacity && data.scaleOpacityMethod==="const"),
                   opacity:     data.opacityMin,
                   wireframe:   data.wireframe, 
                   emissive:    new THREE.Color(data.emissive),
-                  blending:       eval(data.blending),
+                  blending:    eval(data.blending),
                   emissiveIntensity: data.emissiveIntensity,
                   side:        THREE.DoubleSide,
                   vertexColors:THREE.VertexColors
                 });
               } else if (data.material.toLowerCase()=="phong") {
                 this.material = new THREE.MeshPhongMaterial({
-                  transparent: data.scaleOpacity && data.scaleOpacityMethod==="const",
+                  transparent: true,//(data.scaleOpacity && data.scaleOpacityMethod==="const"),
                   opacity:     data.opacityMin,
                   emissive:    new THREE.Color(data.emissive),
                   emissiveIntensity: data.emissiveIntensity,
@@ -449,7 +582,7 @@ window.toc = function(ticStart){
 
               } else {
                 this.material = new THREE.MeshStandardMaterial({
-                  transparent: data.scaleOpacity && data.scaleOpacityMethod==="const",
+                  transparent: true,//(data.scaleOpacity && data.scaleOpacityMethod==="const"),
                   opacity:     data.scaleOpacity ? data.opacityMin : 1,
                   wireframe:   data.wireframe, 
                   emissive:    new THREE.Color(data.emissive),
@@ -463,18 +596,23 @@ window.toc = function(ticStart){
 
               }
           } else if (data.renderMode === "particles") {
+            this.paletteTexture.needsUpdate = true;
             this.material = new THREE.ShaderMaterial({
               uniforms: {
-                pointsize: {value: data.particleSize }
+                pointsize:      { type: 'f', value: this.particleSize },
+                vscale:         { type: 'f', value: this.vscale },
+                paletteSize:    { type: 'f', value: this.palette.length},
+                paletteTexture: { type: 't', value: this.paletteTexture }
               },
               vertexShader:   this.customPointsVertexShader,
               fragmentShader: this.customPointsFragShader,
-              blending:       THREE.NoBlending,
+              //blending:       THREE.NoBlending,
               wireframe:      false,
-              depthTest:      data.particleDepthTest,
-              transparent:    false,
+              //depthTest:      data.particleDepthTest,
+              transparent:    true,
               vertexColors:   THREE.VertexColors
             });
+            this.material.uniforms.paletteTexture.value.needsUpdate = true;
 
           }
         }
@@ -500,6 +638,24 @@ window.toc = function(ticStart){
     } /// Update geometry || material
 
     console.log('aframe-heatmap3d: Blur ' + this.time_blur +"s / geometry " + this.time_geom + "s / material " + this.time_material +"s" );
+
+
+
+    /*
+     * Now that we've built the geometry, we can do the flashy vertical scaling animation
+     */
+    if (data.loadingAnimDur>0 && d3) {
+
+      //Then play the grow animation
+      d3.select(this.el).transition().duration(data.loadingAnimDur).tween('vscale.tween',function(datum, index){
+        return function(t){
+          this.vscale = t;
+          if (this.material.uniforms) this.material.uniforms.vscale.value = t;
+        }.bind(thisComponent);
+      });
+    } // Set up loading animation?
+
+
   }, // end function update()
 
 
@@ -519,6 +675,39 @@ window.toc = function(ticStart){
 
 
 
+
+
+function palette2texture(palette){
+
+  // Create canvas
+  var paletteCanvas = document.createElement('canvas');
+  paletteCanvas.id = "paletteCanvas" + Math.random();
+  paletteCanvas.width = palette.length; paletteCanvas.height=1;
+  var ctx = paletteCanvas.getContext('2d');
+
+  // Set up internal function to convert color strings like '#aabbcc' to [200, 100, 255] RGB tuples
+  function hexToRgb(hex) {
+      if (hex[0]=="#") hex = hex.slice(1); // Chomp leading #
+      var bigint = parseInt(hex, 16);
+      var r = (bigint >> 16) & 255;
+      var g = (bigint >> 8) & 255;
+      var b = bigint & 255;
+      return [r,g,b];
+  }
+
+  // Create ImageData object and populate its .data array
+  var id = ctx.createImageData(paletteCanvas.width,1);
+  for (var i=0, j=0; i<paletteCanvas.width; i++){
+    var a = hexToRgb(palette[i]);
+    id.data[j++] = a[0]; // r
+    id.data[j++] = a[1]; // g 
+    id.data[j++] = a[2]; // b
+    id.data[j++] = 255; // alpha is always 255 
+  }
+  ctx.putImageData( id, 0,0); 
+  return new THREE.Texture(paletteCanvas);
+
+}
 
 
 
