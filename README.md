@@ -22,7 +22,7 @@ srcMobile | Alternative URL to use when viewing on mobile devices | |
 palette | Color palette | redblue |
 flipPalette | Flip color palette upside-down? | false
 scaleOpacity | Scale opacity of peaks? | true
-scaleOpacityMethod | "log","log10", "linear", or "const" scaling of opacity | "linear"
+scaleOpacityMethod | "log","log2", log10", "linear", or "const" scaling of opacity | "log2"
 opacityMin | Minimum opacity | 0.2 
 opacityMax | Max opacity | 1
 ignoreZeroValues | If true, zero values in the data will not be rendered (note: requires `scaleOpacity` be true) | true
@@ -45,19 +45,18 @@ height | depth of component (on Z axis, not Y axis) |  1
 width | width of component, in AFrame units | (see below)
 
 ## Using ##
-Supply a greyscale image (or a color image, in which case the Red pixel value is taken). Normally white=0 elevation and black=1 elevation, or use invertElevation to switch this. Greyscale values are respected, or use `stretch:true` to stretch the values
-so it fully covers elevation 0 to elevation 1. 
+Supply a greyscale image (or a color image, in which case the Red pixel value is taken). Normally white=0 elevation and black=1 elevation, or use invertElevation to switch this. Greyscale values are respected, or use `stretch:true` to stretch the values so it fully covers elevation 0 to elevation 1. 
 
 If you specify just one of `height` or `width`, the other will be calculated based on the aspect ratio of the `src` image. The default height is 1. You can also specify both height and width to force a certain size. The map is always vertically 1 AFrame unit high, so adjust the entity's "scale" Y axis attribute to adjust the height.
 
-You can exlcude zero values in the data by setting `ignoreZeroValues:true`. With this set to `true` the mesh will not contain any triangles over pixels with 0 value. This can result in visual 'islands', so you may wany to add a small nonzero offset to areas of the map (e.g. inside a region border) to avoid these islands.
+You can exlcude zero values in the data by setting `ignoreZeroValues:true`. With this set to `true` the mesh will not contain any triangles/points over pixels with 0 value. This can result in visual 'islands', so you may wany to add a small nonzero offset to areas of the map (e.g. inside a region border) to avoid these.
 
 The opacity/transparency logic is a bit complex. To use per-vertex opacity scaling, set `scaleOpacity:true`. This way you can make peaks more opaque and valleys more transparent. The min and max vertex opacity are controlled by `opacityMin` and `opacityMax`, and the function used to scale pixel values to opacity alpha values is given by `scaleOpacityMethod`. Set `scaleOpacityMethod:const` and `scaleOpacity:true` (the default) to set all vertices to use `opacityMin` as their alpha value.
 
 If you're using per-vertex opacity with a opacity scaling method other than "const" then the material will be a custom shader material that supports per-vertex opacity. But if you don't have different alpha value per vertex we can use a regular THREE material, so you can set 
 `material` to `phong`, `lambert`, or `standard` (default). The `metalicty`, `roughness`, `shininess`, and `blending` attributes all apply to the selected material.
 
-`wireframe` works as expected. Note that the mesh is quite tight-knit, so you may have to zoom in or change the `scale` of the terrain component to see the wireframe nicely.
+`wireframe` works as expected. Note that the mesh is quite tight-knit, so you may have to zoom in, provide a lower-resolution image, or change the `scale` to see the wireframe nicely.
 
 If you want to _stack_ several semi-tranparent maps, you have to place them in your AFrame scene (the HTML) in order from back toward the camera. AFrame seems to render things in the sequence they appear, so if you put something close to the camera, that will draw first and never do the Z-buffer opacity testing for items drawn behind it. You can also try `blending: THREE.AdditiveBlending`
 
@@ -66,6 +65,8 @@ There are a few built-in palettes:
   `greypurple`, `aquablues`, `reds`, `terrain`, `redblue`, `RdYlBu`, `terrain`, `purples`, `grass`, `winter`, `greens`,  `autumn`, `hot`, `viridis`, `plasma`, `inferno`, `parula`, and `cool`.
 These are taken from MATLAB and [ColorBrewer](http://colorbrewer2.org). You can also specify a palette as a JSON array, as shown in the example. See also the `MATLAB_PALETTE.m` file to see how to convert MATLAB colormaps to JSON strings. To make a mono-colored surface, supply palette with a single entry, e.g `"...;  palette: ['#ff0000']; ..."`
 
+
+See the [aframe-hexgraph-hexmap example]((https://morandd.github.io/aframe-hexgraph-hexmap/example/) to see the palette options in action.
 
 
 
@@ -104,6 +105,5 @@ Example:
 ## TODO ##
 - Improve handling of load sequence, use Promises and onload events properly.
 - Allow JSON input. To implement this, the user can specify a 2-dimensional array as JSON, or set of x/y/value points, which are drawn to a canvas then blurred.
-- Add options to tune material. Or change to check if a material= component is attached to the same entity, and then use that instead.
-- Supporte texture mapped surface?
+- Use material component if one is specified
 

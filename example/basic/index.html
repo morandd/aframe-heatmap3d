@@ -19,6 +19,7 @@
 	<script src="https://cdn.rawgit.com/tizzle/aframe-orbit-controls-component/master/dist/aframe-orbit-controls-component.min.js"></script>
 -->
 
+	<script src="https://cdn.rawgit.com/tizzle/aframe-orbit-controls-component/master/dist/aframe-orbit-controls-component.min.js"></script>
 
 
 	<style>
@@ -105,8 +106,8 @@
 			<img id="pngMobileAsia" src="asia_820.jpg"  style="display:none"/>
 			<img id="pngUSA" src="usa.jpg"  style="display:none"/>
 			<img id="pngMobileUSA" src="usa.jpg"  style="display:none"/>
-			<img id="pngEU" src="eu_820.jpg"  style="display:none"/>
-			<img id="pngMobileEU" src="eu_820.jpg"  style="display:none"/>
+			<img id="pngEU" src="eu_128.jpg"  style="display:none"/>
+			<img id="pngMobileEU" src="eu_128.jpg"  style="display:none"/>
 		</a-assets>
 
 
@@ -139,19 +140,17 @@
 		id="middle"
 		aframe-heatmap3d="
 		src: #pngEU;
-		srcMobile: #pngEUMobile;
 		ignoreZeroValues:true; 
-		stackBlurRadius:4.5;
+		stackBlurRadius:1.0;
 		stackBlurRadiusMobile:0.5;
 		palette:plasma;
 		flipPalette:false; 
-		renderMode: particles;
+		renderMode: surface;
 		scaleOpacity: true;
-		scaleOpacityMethod:log;
-		opacityMin: 0; 
+		scaleOpacityMethod:log2;
+		opacityMin: 0.01; 
 		 width: 6; height: 3;" scale="1 0.5 1">
 		</a-entity>
-
 
 
 		<!--Righhand map -->
@@ -165,6 +164,8 @@
 		palette:parula;
 		flipPalette:false; 
 		material: standard;
+		renderMode: particles;
+		particleSize:2.0;
 		metalness:0.3;
 		roughness:0.2;
 		stretch:true;
@@ -172,7 +173,6 @@
 		scaleOpacity: false;
 		 width: 6; height: 3;" position="7 0 0" scale="1 0.5 1">
 		</a-entity>
-
 		<!-- Lefthand map. Use small PNG file to get widely spaced wireframe. -->
 		<a-entity	
 		id="left"
@@ -181,6 +181,7 @@
 		stackBlurRadius:8.5;
 		palette: viridis;
 		wireframe:true;
+		ignoreZeroValues:false;
 		material: standard;
 		metalness:.7;
 		roughness: 1;
@@ -219,7 +220,7 @@
 		<a-entity
 			camera="active:true"
 			id="camera_orbit"
-			position="0 3 6"
+			position="0 2 2"
 			look-controls
 			wasd-controls="fly:true"
 			orbit-controls="

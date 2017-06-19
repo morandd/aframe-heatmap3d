@@ -90,7 +90,7 @@ function hexToRgb(hex) {
     },
     scaleOpacityMethod: {
       type: 'string',
-      default: 'linear' // Can be 'log' 'linear', or 'const'. If 'const' and scaleOpacity=false, we set 
+      default: 'log2' // Can be 'log' 'linear', or 'const'. If 'const' and scaleOpacity=false, we set 
     },
    stretch: {
        type: 'boolean',
@@ -156,7 +156,7 @@ function hexToRgb(hex) {
 
 
   customVertexShader: '' +
-    '     attribute float opacity;' + // Overall opacity
+    '     attribute float opacity;' + // Desired opacity of this vertex
     '     attribute float height01;' + // Desired height of this vertex
 //    '     varying vec4 vColor;' +
     '     varying float vOpacity;' + // passed to the frag shader via the interpolator
@@ -183,21 +183,60 @@ function hexToRgb(hex) {
     '       gl_FragColor = c;' +
     '     }',
 
+  customVertexLightsShader: '' +
+    '     attribute float opacity;' + // Desired opacity of this vertex
+    '     attribute float height01;' + // Desired height of this vertex
+//    '     varying vec4 vColor;' +
+    '     varying float vOpacity;' + // passed to the frag shader via the interpolator
+    '     varying float vHeight;' + // Passed to the frag shader via the interpolator
+    '     varying vec3 vecPos;' +
+    '     varying vec3 vecNormal;' +
+//    '     uniform sampler2D paletteTexture; ' +
+    '     uniform float vscale;' + // Scaling uniform used to drive animations
+    '     vec3 positionAdj; ' + 
+    '     void main() {' +
+    '       vHeight = height01 * vscale;' + 
+    '       vOpacity = opacity * vscale;' + 
+    '       vecNormal = normal;' +
+    '       vecPos = (modelViewMatrix * vec4(positionAdj, 1.0)).xyz;' +
+    '       positionAdj  = position; positionAdj.y = positionAdj.y * vscale; ' +
+    '       gl_Position = projectionMatrix * modelViewMatrix * vec4( positionAdj, 1.0 );;' +
+    '     }',
+
+  customFragLightsShader: '' +
+    //'     varying vec4 vColor;' +
+    '     varying vec3 vecPos;' +
+    '     varying vec3 vecNormal;' +
+    '     varying float vHeight;' +
+    '     varying float vOpacity;' +
+    '     uniform sampler2D paletteTexture; ' +
+    '     vec4 c;' +
+    '     void main() {' +
+    '       c = texture2D(paletteTexture, vec2(vHeight, 0.0));' +
+    ' vec4 addedLights = vec4(0.0, 0.0, 0.0, 0.0);'+
+'  addedLights.rgb += clamp(dot(-normalize(vecPos - (viewMatrix * vec4(1.0, 0.5, 0.3, 1.0)).xyz), vecNormal), 0.0, 1.0) * vec3(1.0, 1.0, 1.0);'+
+'  addedLights.rgb += clamp(dot(-normalize(vecPos - (viewMatrix * vec4(-1.0, 0.5, 0.0, 1.0)).xyz), vecNormal), 0.0, 1.0) * vec3(0.5, 0.5, 0.5);'+
+'  c = mix(c, addedLights, 0.2);' +
+    '       c.w = vOpacity;' +
+    '       gl_FragColor = c;' +
+    '     }',
 
   customPointsVertexShader: '' +
     '     uniform float pointsize;' +
     '     uniform float vscale;' + // Scaling uniform used to drive animations
-    '     attribute float opacity;' + // Overall opacity
+    '     attribute float opacity;' + // Overall opacity of this vertex
     '     attribute float height01;' + // Desired height of this vertex
     '     varying float vOpacity;' + // passed to the frag shader via the interpolator
     '     varying float vHeight;' + // Passed to the frag shader via the interpolator
     '     vec3 positionAdj; ' + 
     '     void main() {' +
     '       vHeight = height01 * vscale;' + 
-    '       vOpacity = opacity * vscale;' + 
+    '       vOpacity = vscale;' + 
+    '       vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );' +
     '       positionAdj  = position; positionAdj.y = positionAdj.y * vscale; ' +
-    '       gl_PointSize = pointsize;' +
     '       gl_Position = projectionMatrix * modelViewMatrix * vec4( positionAdj, 1.0 );;' +
+    '       gl_PointSize = pointsize;' +
+       '       gl_PointSize = pointsize * ( 10.0 / length( mvPosition.xyz ) );' +
     '     }',
 
   customPointsFragShader: '' +
@@ -208,7 +247,7 @@ function hexToRgb(hex) {
     '     vec4 c;' +
     '     void main() {' +
     '       c = texture2D(paletteTexture, vec2(vHeight, 0.0));' +
-    '       c.w = 1.0;' +
+    '       c.w = vOpacity;' +
     '       gl_FragColor = c;' +
     '     }',
 /*
@@ -298,7 +337,7 @@ function hexToRgb(hex) {
       data.scaleOpacity = false;
       console.warn('aframe-heatmap3d: Since renderMode=particles, forcing scaleOpacity=false');
     }
-
+    console.assert(data.renderMode==='surface' || data.renderMode==='particles','renderMode must be "surface" or "particles". Unknown value"'+data.renderMode +'"');
 
 
     /*
@@ -475,7 +514,11 @@ function hexToRgb(hex) {
     var sm= data.scaleOpacity ? 0 : -1; // Shorthand value for scaleOpacityMethod
     if (data.scaleOpacityMethod==="log") sm=1;
     if (data.scaleOpacityMethod==="log10") sm=2;
-    if (data.scaleOpacityMethod==="const") sm=3;
+    if (data.scaleOpacityMethod==="log2") sm=4;
+    if (data.scaleOpacityMethod==="const") {
+      console.warn('scaleOpacityMethod:const, so setting the entire object to opacityMin=' + this.data.opacityMin);
+      sm=3;
+    }
 
 
     data.updateMaterial = (this.material===undefined || "emissive" in diff || "flipPalette" in diff || "roughness" in diff  || "metalness" in diff  || "shininess" in diff || "emissiveIntensity" in diff || "opacityMin" in diff || "opacityMax" in diff || "palette" in diff || "scaleOpacityMethod" in diff ||"scaleOpacity" in diff || "wireframe" in diff || "material" in diff  || "renderMode" in diff  || "particleSize" in diff  );
@@ -504,7 +547,11 @@ function hexToRgb(hex) {
             vertexOpacities[di] = Math.max(data.opacityMin, Math.log(val+1) / Math.log(2) * data.opacityMax);
           } else if (sm===2) {
             vertexOpacities[di] = Math.max(data.opacityMin, Math.log10(val+1) / Math.log10(2) * data.opacityMax);
-          }
+          } else if (sm===4) {
+            vertexOpacities[di] = Math.max(data.opacityMin, Math.log2(val+1) / Math.log2(2) * data.opacityMax);
+          } else if (sm===3) {
+            vertexOpacities[di] = data.opacityMin;
+          } 
 
           if (data.ignoreZeroValues && val===0) vertexOpacities[di]=0;
 
@@ -533,16 +580,15 @@ function hexToRgb(hex) {
          * See: https://github.com/mrdoob/three.js/issues/2118
          * If there is no transparency, we can use a normal Lambert material.
          */
-        if (data.scaleOpacity && data.scaleOpacityMethod!=="const" && data.material=="default" && !data.wireframe) {
+        if (data.scaleOpacity && data.material=="default" && data.renderMode!="particles" && !data.wireframe) {
           this.paletteTexture.needsUpdate = true;
           this.material = new THREE.ShaderMaterial({
             uniforms: {
               vscale:         { type: 'f', value: this.vscale },
-              paletteSize:    { type: 'f', value: this.palette.length},
               paletteTexture: { type: 't', value: this.paletteTexture }
             },
-            vertexShader:   this.customVertexShader,
-            fragmentShader: this.customFragShader,
+            vertexShader:   this.customVertexLightsShader,
+            fragmentShader: this.customFragLightsShader,
             depthTest:      true,
             //side:         THREE.DoubleSide,
             transparent:    true,
@@ -599,16 +645,15 @@ function hexToRgb(hex) {
             this.paletteTexture.needsUpdate = true;
             this.material = new THREE.ShaderMaterial({
               uniforms: {
-                pointsize:      { type: 'f', value: this.particleSize },
+                pointsize:      { type: 'f', value: this.data.particleSize || 1.0 },
                 vscale:         { type: 'f', value: this.vscale },
-                paletteSize:    { type: 'f', value: this.palette.length},
                 paletteTexture: { type: 't', value: this.paletteTexture }
               },
               vertexShader:   this.customPointsVertexShader,
               fragmentShader: this.customPointsFragShader,
               //blending:       THREE.NoBlending,
               wireframe:      false,
-              //depthTest:      data.particleDepthTest,
+              depthTest:      false,
               transparent:    true,
               vertexColors:   THREE.VertexColors
             });
