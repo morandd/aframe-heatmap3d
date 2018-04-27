@@ -342,7 +342,7 @@ function hexToRgb(hex) {
     } // "src" in diff?
 
 
-    if ("srcOpacity" in diff || "srcOpacityMobile" in diff) {
+    if (data.srcOpacity != '' && !thisComponent.ocanvasReady ) {
       var oimg = AFRAME.utils.device.isMobile() ?  data.srcOpacityMobile : data.srcOpacity;
       // This is handled differently by various versions of AFrame:
       if (typeof oimg === "string") { oimg = document.querySelectorAll('[src="' + oimg + '"]'); oimg=oimg[0]; }
@@ -358,11 +358,11 @@ function hexToRgb(hex) {
         var blurRadius = AFRAME.utils.device.isMobile() ?  data.stackBlurRadiusMobile  : data.stackBlurRadius;
         thisComponent.ocanvas.getContext('2d').drawImage(oimg, 0, 0);
         thisComponent.otime_blur = 0;
-        if (blurRadius>0) {
+        /*if (blurRadius>0) {
           thisComponent.otime_blur = window.tic();
           StackBlur.canvasRGBA(thisComponent.ocanvas, 0, 0, oimg.width,  oimg.height, blurRadius);
           thisComponent.otime_blur = window.toc(thisComponent.otime_blur);
-        }
+        }*/
         thisComponent.ocanvasContext =  thisComponent.ocanvas.getContext('2d');
         thisComponent.ocanvasReady=true;
         data.updateGeometry=true;
@@ -370,6 +370,9 @@ function hexToRgb(hex) {
         thisComponent.update(data);  // Fire update() again so we can run the code below and actually generate the terrain mesh
       }// onImageLoaded
     }  // "srcOpacity" in diff?
+
+
+    if (data.srcOpacity=='') thisComponent.ocanvasReady=true;
 
 
 
@@ -505,7 +508,7 @@ function hexToRgb(hex) {
           this.imgBytes = this.canvasContext.getImageData(0, 0,this.canvas.width, this.canvas.height).data;
           this.heights = new Float32Array(this.imgBytes.length/4);
 
-          if (this.ocanvasContext != null) {
+          if (data.srcOpacity != ''  && this.ocanvasContext != null) {
   	          this.oimgBytes = this.ocanvasContext.getImageData(0, 0,this.ocanvas.width, this.ocanvas.height).data;
           } else {
           	this.oimgBytes = [];
@@ -608,7 +611,7 @@ function hexToRgb(hex) {
           } else if (sm===4) {
             vertexOpacities[di] = Math.max(data.opacityMin, Math.log2(val+1) / Math.log2(2) * data.opacityMax);
           } else if (sm===5) {
-            vertexOpacities[di] = this.oimgBytes[di]/255;
+            vertexOpacities[di] = this.oimgBytes[ci]/255;
           } else if (sm===3) {
             vertexOpacities[di] = data.opacityMin;
           } 
