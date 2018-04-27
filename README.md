@@ -19,6 +19,8 @@ Attribute | Description | Default
 --- | --- | ---
 src | Data to visualize: image URL or AFrame asset (e.g. '#myImage')  | |
 srcMobile | Alternative URL to use when viewing on mobile devices | |
+srcOpacity | URL or AFrame asset with a greyscale image to use for opacity values. | |
+srcOpacityMobile | URL or AFrame asset with a greyscale image to use for opacity values. | |
 palette | Color palette | redblue |
 flipPalette | Flip color palette upside-down? | false
 scaleOpacity | Scale opacity of peaks? | true
@@ -41,6 +43,9 @@ roughness | Roughness property for standard material | 0.5
 particleSize | Particle size, for renderMode=particles | 1.0
 material | Material type: can be "lambert", "phong", or "standard". Ignored if per-vertex opacity is used | "standard"
 blending | Blending mode (as string, eg "THREE.AdditiveBlending") | THREE.NormalBlending
+specular | Specular highlights color | #111111
+loadingAnimDur | How long the loading animation runs, in ms | 1800
+unloadingAnimDur | Duration, in ms | 1500
 height | depth of component (on Z axis, not Y axis) |  1
 width | width of component, in AFrame units | (see below)
 
@@ -51,7 +56,9 @@ If you specify just one of `height` or `width`, the other will be calculated bas
 
 You can exlcude zero values in the data by setting `ignoreZeroValues:true`. With this set to `true` the mesh will not contain any triangles/points over pixels with 0 value. This can result in visual 'islands', so you may wany to add a small nonzero offset to areas of the map (e.g. inside a region border) to avoid these.
 
-The opacity/transparency logic is a bit complex. To use per-vertex opacity scaling, set `scaleOpacity:true`. This way you can make peaks more opaque and valleys more transparent. The min and max vertex opacity are controlled by `opacityMin` and `opacityMax`, and the function used to scale pixel values to opacity alpha values is given by `scaleOpacityMethod`. Set `scaleOpacityMethod:const` and `scaleOpacity:true` (the default) to set all vertices to use `opacityMin` as their alpha value.
+The opacity/transparency logic is a bit complex. If you supply your own opacity values image as alphaSrc (this image is treated the same as `src`, ie. it will be StackBlurred, etc.) these will be used. Alpha values will be taken directly from this image, in the range 0-255, and not rescaled. 
+
+ To use per-vertex opacity scaling, set `scaleOpacity:true`. This way you can make peaks more opaque and valleys more transparent. The min and max vertex opacity are controlled by `opacityMin` and `opacityMax`, and the function used to scale pixel values to opacity alpha values is given by `scaleOpacityMethod`. Set `scaleOpacityMethod:const` and `scaleOpacity:true` (the default) to set all vertices to use `opacityMin` as their alpha value.
 
 If you're using per-vertex opacity with a opacity scaling method other than "const" then the material will be a custom shader material that supports per-vertex opacity. But if you don't have different alpha value per vertex we can use a regular THREE material, so you can set 
 `material` to `phong`, `lambert`, or `standard` (default). The `metalicty`, `roughness`, `shininess`, and `blending` attributes all apply to the selected material.

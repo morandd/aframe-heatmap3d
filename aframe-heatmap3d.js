@@ -40,6 +40,14 @@ function hexToRgb(hex) {
       type: 'asset',
       default:''
     },
+    srcOpacity: {
+      type: 'asset',
+      default:''
+    },
+    srcOpacityMobile: {
+      type: 'asset',
+      default:''
+    },
     palette: {
       type: 'string',
       default: 'redblue' // Taken from Color Brewer. Must be a valid JSON string (readable by JSON.parse())
@@ -151,6 +159,13 @@ function hexToRgb(hex) {
     this.canvas.setAttribute("height", 0);
     this.canvasContext =  this.canvas.getContext('2d');
     this.canvasReady=false;
+
+    this.ocanvas = document.createElement('canvas');
+    this.ocanvas.setAttribute("width", 0);
+    this.ocanvas.setAttribute("height", 0);
+    this.ocanvasContext =  this.canvas.getContext('2d');
+    this.ocanvasReady=false;
+
     this.vscale = 1;
   },
 
@@ -281,6 +296,8 @@ function hexToRgb(hex) {
 
     data.src = data.src || ''; // If user does not specify, this is 'undefined' instead of ''. Fix here.
     data.srcMobile = data.srcMobile || ''; 
+    data.srcOpacity = data.srcOpacity || '';
+    data.srcOpacityMobile = data.srcOpacityMobile || '';
 
     var diff = AFRAME.utils.diff(data, oldData);
 
@@ -292,7 +309,7 @@ function hexToRgb(hex) {
      */
     if (data.src==='') return;
 
-    if ("src" in diff) { //} && (data.src.length>0 || data.srcMobile.length>0)) {
+    if ("src" in diff || "srcMobile" in diff) { //} && (data.src.length>0 || data.srcMobile.length>0)) {
       //var img = document.querySelectorAll('[src="' + (AFRAME.utils.device.isMobile() ?  data.srcMobile : data.src) + '"]');
       //img=img[0];
       var img = AFRAME.utils.device.isMobile() ?  data.srcMobile : data.src;
@@ -325,12 +342,42 @@ function hexToRgb(hex) {
     } // "src" in diff?
 
 
+    if ("srcOpacity" in diff || "srcOpacityMobile" in diff) {
+      var oimg = AFRAME.utils.device.isMobile() ?  data.srcOpacityMobile : data.srcOpacity;
+      // This is handled differently by various versions of AFrame:
+      if (typeof oimg === "string") { oimg = document.querySelectorAll('[src="' + oimg + '"]'); oimg=oimg[0]; }
+      if (oimg.complete) onOImageLoaded(); else oimg.addEventListener("load",onOImageLoaded);
+      return;
+      function onOImageLoaded(){
+        // Render the image into an invisible canvas
+        thisComponent.ocanvas = document.createElement('canvas');
+        thisComponent.ocanvas.setAttribute("width", oimg.width);
+        thisComponent.ocanvas.setAttribute("height", oimg.height);
+        data.aspectRatioO = oimg.width / oimg.height;
+        thisComponent.ocanvas.style.display="none";
+        var blurRadius = AFRAME.utils.device.isMobile() ?  data.stackBlurRadiusMobile  : data.stackBlurRadius;
+        thisComponent.ocanvas.getContext('2d').drawImage(oimg, 0, 0);
+        thisComponent.otime_blur = 0;
+        if (blurRadius>0) {
+          thisComponent.otime_blur = window.tic();
+          StackBlur.canvasRGBA(thisComponent.ocanvas, 0, 0, oimg.width,  oimg.height, blurRadius);
+          thisComponent.otime_blur = window.toc(thisComponent.otime_blur);
+        }
+        thisComponent.ocanvasContext =  thisComponent.ocanvas.getContext('2d');
+        thisComponent.ocanvasReady=true;
+        data.updateGeometry=true;
+
+        thisComponent.update(data);  // Fire update() again so we can run the code below and actually generate the terrain mesh
+      }// onImageLoaded
+    }  // "srcOpacity" in diff?
 
 
 
 
     // Only (re-)generate the mesh if we have DEM data
     if (!thisComponent.canvasReady) { return; }
+    if (!thisComponent.ocanvasReady) { return; }
+
 
 
     if ("particles" === data.renderMode && data.scaleOpacity) {
@@ -458,6 +505,14 @@ function hexToRgb(hex) {
           this.imgBytes = this.canvasContext.getImageData(0, 0,this.canvas.width, this.canvas.height).data;
           this.heights = new Float32Array(this.imgBytes.length/4);
 
+          if (this.ocanvasContext != null) {
+  	          this.oimgBytes = this.ocanvasContext.getImageData(0, 0,this.ocanvas.width, this.ocanvas.height).data;
+          } else {
+          	this.oimgBytes = [];
+          }
+
+
+
 
           // Do a pass over the data to get max and min values
           // We also do the invertElevation operation here. Normally black=100% elevation and white=0 elevation
@@ -519,7 +574,10 @@ function hexToRgb(hex) {
       console.warn('scaleOpacityMethod:const, so setting the entire object to opacityMin=' + this.data.opacityMin);
       sm=3;
     }
-
+    if (this.oimgBytes.length>0) {
+    	sm=5;
+    	this.scaleOpacity=true;
+	}
 
     data.updateMaterial = (this.material===undefined || "emissive" in diff || "flipPalette" in diff || "roughness" in diff  || "metalness" in diff  || "shininess" in diff || "emissiveIntensity" in diff || "opacityMin" in diff || "opacityMax" in diff || "palette" in diff || "scaleOpacityMethod" in diff ||"scaleOpacity" in diff || "wireframe" in diff || "material" in diff  || "renderMode" in diff  || "particleSize" in diff  );
 
@@ -549,6 +607,8 @@ function hexToRgb(hex) {
             vertexOpacities[di] = Math.max(data.opacityMin, Math.log10(val+1) / Math.log10(2) * data.opacityMax);
           } else if (sm===4) {
             vertexOpacities[di] = Math.max(data.opacityMin, Math.log2(val+1) / Math.log2(2) * data.opacityMax);
+          } else if (sm===5) {
+            vertexOpacities[di] = this.oimgBytes[di]/255;
           } else if (sm===3) {
             vertexOpacities[di] = data.opacityMin;
           } 
